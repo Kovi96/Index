@@ -910,6 +910,43 @@ function initPaymentTermsUI(){
   updatePaymentTerms();
 }
 
+function guardPinOnCheckbox(checkboxId, pinCode, storageKey){
+  const el = document.getElementById(checkboxId);
+  if(!el) return;
+  let internal=false;
+
+  el.addEventListener('change', (e)=>{
+    if(internal) return;
+    // Only protect enabling (ON)
+    if(!el.checked) return;
+
+    const entered = window.prompt('Введите PIN-код для включения:');
+    if(entered === String(pinCode)){
+      return;
+    }
+
+    // Wrong / cancelled
+    internal=true;
+    el.checked=false;
+    internal=false;
+
+    // revert any UI that might have been toggled by other handlers
+    try{
+      if(checkboxId==='showROI'){
+        document.getElementById('roiCard')?.classList.remove('show');
+        document.getElementById('kpiROI').textContent='—';
+      }
+      if(checkboxId==='showPaymentTerms'){
+        document.getElementById('paymentTermsCard')?.classList.remove('show');
+      }
+    }catch(_){}
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    alert('Неверный PIN-код');
+  }, true); // capture to run before other handlers
+}
+
 function initListeners(){
   // базовые поля
   ['endpoints','partnerDiscount','partnerName','validUntil','discModules','showROI'].forEach(id=>{
@@ -944,6 +981,10 @@ function initListeners(){
   try{syncDiscountUI();}catch(e){}
 
   try{ initPaymentTermsUI(); }catch(e){}
+
+  // PIN protection for optional blocks
+  try{ guardPinOnCheckbox('showROI', 7789, 'pin_ok_showROI'); }catch(e){}
+  try{ guardPinOnCheckbox('showPaymentTerms', 9022, 'pin_ok_showPaymentTerms'); }catch(e){}
 }
 
 
@@ -951,7 +992,9 @@ function valOrDash(id){ const el=document.getElementById(id); return el && 'valu
 function setupPDF() {
   document.getElementById('btnPDF').addEventListener('click', async () => {
     try {
-      const printHost = document.getElementById('printDoc');
+      
+      try{ recalc(); }catch(e){}
+const printHost = document.getElementById('printDoc');
       printHost.innerHTML = '';
       const page = document.createElement('div');
       page.className = 'a3page';
@@ -991,7 +1034,22 @@ const showPartnerInPdf = !!(document.getElementById('usePartnerDiscount')?.check
             </div>
           </div>`;
       }
-      const today = new Date().toLocaleDateString('ru-RU');
+      
+
+      // ROI: include in PDF only when checkbox is ON
+      const __roiCb = document.getElementById('showROI');
+      const showRoiInPdf = !!(__roiCb && __roiCb.checked);
+      let roiBlockHtml = '';
+      if (showRoiInPdf) {
+        const roiVal = (document.getElementById('kpiROI')?.textContent || '—').trim() || '—';
+        roiBlockHtml = `
+          <div class="roi-pdf" style="margin-top:10px;padding:14px 16px;border:3px solid #000;border-radius:10px;background:#fff;color:#000;font-weight:700">
+            <div style="font-weight:700;margin-bottom:6px">ROI (оценка окупаемости)</div>
+            <div style="font-size:16px;color:#000;font-weight:700">📈 <strong>ROI:</strong> ${escapeHtml(roiVal)}</div>
+          </div>`;
+      }
+
+const today = new Date().toLocaleDateString('ru-RU');
       const validRaw = (document.getElementById('validUntil') && document.getElementById('validUntil').value) ? new Date(document.getElementById('validUntil').value.replace(/-/g,'/')) : null;
       const validFmt = validRaw ? validRaw.toLocaleDateString('ru-RU') : '—';
       inner.innerHTML = `
@@ -1009,6 +1067,7 @@ const showPartnerInPdf = !!(document.getElementById('usePartnerDiscount')?.check
           <div><strong>Действует до:</strong> ${escapeHtml(valOrDash('validUntil'))}</div>
         </div>
           ${payBlockHtml}
+          ${roiBlockHtml}
       <div class="ptable" id="pdfTableWrap"></div>
         <div class="footer-note">ООО НЦПР  Инферит ИТМен  Конфиденциально</div>
       `;

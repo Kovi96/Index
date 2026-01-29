@@ -99,6 +99,15 @@ table{width:100%;border-collapse:collapse;font-size:13px} th,td{padding:10px 8px
 
 /* Hide partner profit KPI unless partner discount is enabled */
 body.hidePartnerProfit .stat.profit{display:none !important;}
+
+/* ROI optional block */
+#roiCard{ display:none; margin-top:12px; padding-top:10px; border-top:1px solid rgba(0,0,0,0.08); }
+#roiCard.show{ display:block; }
+.roiRow{ display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+.roiRow .stat{ flex:1; min-width:220px; }
+.switchline{ display:flex; align-items:center; gap:10px; margin-top:10px; user-select:none; }
+.switchline input{ transform: scale(1.1); }
+
 </style>
 <style id="kpi-border-patch">
 /* Force visible green border/outline for KPI block in both screen and PDF */
@@ -123,6 +132,15 @@ body.hidePartnerProfit .stat.profit{display:none !important;}
   font-weight:800 !important;
 }
 #pdfTableWrap .kpis { padding:10px !important; }
+
+/* ROI optional block */
+#roiCard{ display:none; margin-top:12px; padding-top:10px; border-top:1px solid rgba(0,0,0,0.08); }
+#roiCard.show{ display:block; }
+.roiRow{ display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; }
+.roiRow .stat{ flex:1; min-width:220px; }
+.switchline{ display:flex; align-items:center; gap:10px; margin-top:10px; user-select:none; }
+.switchline input{ transform: scale(1.1); }
+
 </style>
 </head>
 <body class="hidePartnerProfit">
@@ -229,7 +247,18 @@ body.hidePartnerProfit .stat.profit{display:none !important;}
 <h2>Модули</h2>
 <div class="chips" id="modules"></div>
 <div class="hr"></div>
-<div class="badge">Эффекты: до 25% лицензии · до 30% ИТ-активы · до 40% ручные процессы · до 10% ИТ-персонал</div>
+<div class="badge">Эффекты:
+<label class="switchline"><input type="checkbox" id="showROI">Показать ROI (оценка окупаемости)</label>
+<div id="roiCard">
+  <div class="roiRow">
+    <div class="stat roi">
+      <div class="label">Расчёт окупаемости</div>
+      <div class="value mono" id="kpiROI">—</div>
+      <div class="muted">Считается автоматически от числа конечных точек, выбранных модулей и типа лицензии.</div>
+    </div>
+  </div>
+</div>
+ до 25% лицензии · до 30% ИТ-активы · до 40% ручные процессы · до 10% ИТ-персонал</div>
 </div>
 <div class="card">
 <h2>Итоги (стоимость)</h2>
@@ -383,6 +412,53 @@ function syncDiscountUI(){
   });
 }
 const VAT = 0.22;
+
+// ROI baselines (из старого калькулятора)
+const BASELINES={"100-5000":{lic:4000,assets:6000,manual:2800,staff:3500},"5001-25000":{lic:3700,assets:5600,manual:2600,staff:3300},"25001-50000":{lic:3400,assets:5200,manual:2400,staff:3100},"50001+":{lic:3000,assets:4800,manual:2200,staff:2900}};
+const ROI_PCT={lic:0.25,assets:0.30,manual:0.40,staff:0.10};
+const ROI_FACTOR={annual:1.2,perpetual:3.2};
+
+function getRangeROI(endpoints){
+  if (endpoints <= 5000) return "100-5000";
+  if (endpoints <= 25000) return "5001-25000";
+  if (endpoints <= 50000) return "25001-50000";
+  return "50001+";
+}
+function roiHiddenSavings(endpoints, licenseType, selectedModsCount){
+  const r=getRangeROI(endpoints);
+  const b=BASELINES[r];
+  if (!b) return 0;
+  const factor = (licenseType === 'annual') ? ROI_FACTOR.annual : ROI_FACTOR.perpetual;
+  const totalMods = (typeof MODULE_LIST !== 'undefined' && MODULE_LIST.length) ? MODULE_LIST.length : 1;
+  const modShare = Math.max(0.33, selectedModsCount / Math.max(1,totalMods));
+  const baseLic=b.lic*endpoints, baseAssets=b.assets*endpoints, baseManual=b.manual*endpoints, baseStaff=b.staff*endpoints;
+  return baseLic*ROI_PCT.lic*factor*modShare
+       + baseAssets*ROI_PCT.assets*factor*modShare
+       + baseManual*ROI_PCT.manual*factor*modShare
+       + baseStaff*ROI_PCT.staff*factor*modShare;
+}
+function updateROI(totals){
+  const cb=document.getElementById('showROI');
+  const card=document.getElementById('roiCard');
+  const out=document.getElementById('kpiROI');
+  if(!cb || !card || !out) return;
+
+  if(!cb.checked){
+    card.classList.remove('show');
+    out.textContent='—';
+    return;
+  }
+  card.classList.add('show');
+
+  const endpoints=parseInt(document.getElementById('endpoints')?.value||'0',10) || 0;
+  const licenseType=document.getElementById('licenseType')?.value || 'annual';
+  const selectedModsCount=document.querySelectorAll('#modules .chip[data-active="1"]').length;
+
+  const cost = (totals && typeof totals.sumWithVAT === 'number') ? totals.sumWithVAT : 0;
+  const savings = roiHiddenSavings(endpoints, licenseType, selectedModsCount);
+  const roi = cost>0 ? (savings - cost) / cost : 0;
+  out.textContent = 'до ' + (roi*100).toFixed(1).replace('.',',') + '%';
+}
 
 // Прайс (усечён)
 const PRICING = {
@@ -713,12 +789,13 @@ renderTable(items, totals);
   document.getElementById('supportCost').textContent = fmt(totals.supportFullWithVAT);
   const prof = computePartnerProfit(totals);
   document.getElementById('kpiPartnerProfit').textContent = `Год 1: ${fmt(prof.profitY1)} · 3 года: ${fmt(prof.profitY3)}`;
+  try{updateROI(totals);}catch(e){}
 }
 
 // listeners for live recalc
 function initListeners(){
   // базовые поля
-  ['endpoints','partnerDiscount','partnerName','validUntil','discModules'].forEach(id=>{
+  ['endpoints','partnerDiscount','partnerName','validUntil','discModules','showROI'].forEach(id=>{
     const el = document.getElementById(id);
     if(!el) return;
     el.addEventListener('input', recalc);

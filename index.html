@@ -53,7 +53,7 @@ table{width:100%;border-collapse:collapse;font-size:13px} th,td{padding:10px 8px
 /* PDF */
 .print-doc{position:fixed;left:-99999px;top:0;z-index:-1;opacity:0;pointer-events:none}
 .a3page{width:2480px;height:1754px;position:relative;background:#fff;overflow:hidden;display:flex;flex-direction:column}
-.page-bg{position:absolute;inset:0;background-repeat:no-repeat;background-position:center;background-size:100% auto;opacity:.12;filter:grayscale(100%);pointer-events:none}
+.page-bg{position:absolute;inset:0;background-repeat:no-repeat;background-position:center;background-size:100% auto;opacity:.04;filter:grayscale(100%);pointer-events:none}
 .page-inner{position:relative;padding:22px 28px 40px 28px;display:flex;flex-direction:column;gap:14px;flex:1}
 .p-header{display:flex;justify-content:space-between;align-items:center;gap:22px;padding:18px 20px;background:linear-gradient(90deg,#0f172a,#111827);border-radius:16px}
 .p-title{color:#fff;font-weight:900;font-size:28px;letter-spacing:.2px}
@@ -99,6 +99,14 @@ table{width:100%;border-collapse:collapse;font-size:13px} th,td{padding:10px 8px
 
 /* Hide partner profit KPI unless partner discount is enabled */
 body.hidePartnerProfit .stat.profit{display:none !important;}
+/* Payment terms optional block */
+#paymentTermsCard{
+  display:none;
+  margin-top:12px;
+  padding-top:10px;
+  border-top:1px solid rgba(0,0,0,0.08);
+}
+#paymentTermsCard.show{ display:block; }
 
 /* ROI optional block */
 #roiCard{ display:none; margin-top:12px; padding-top:10px; border-top:1px solid rgba(0,0,0,0.08); }
@@ -108,6 +116,10 @@ body.hidePartnerProfit .stat.profit{display:none !important;}
 .switchline{ display:flex; align-items:center; gap:10px; margin-top:10px; user-select:none; }
 .switchline input{ transform: scale(1.1); }
 
+
+@media print{
+  *{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 </style>
 <style id="kpi-border-patch">
 /* Force visible green border/outline for KPI block in both screen and PDF */
@@ -141,6 +153,10 @@ body.hidePartnerProfit .stat.profit{display:none !important;}
 .switchline{ display:flex; align-items:center; gap:10px; margin-top:10px; user-select:none; }
 .switchline input{ transform: scale(1.1); }
 
+
+@media print{
+  *{ -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 </style>
 </head>
 <body class="hidePartnerProfit">
@@ -276,6 +292,42 @@ body.hidePartnerProfit .stat.profit{display:none !important;}
 <div class="label">Заработок партнёра</div>
 <div class="value mono" id="kpiPartnerProfit">Год 1: — · 3 года: —</div>
 <div class="muted">Бессрочная лицензия: в годах 2–3 учитывается только ТП. Срочная: лицензия+ТП ежегодно (внедрение — разово).</div>
+</div>
+<!-- Условия оплаты (не влияет на расчёт стоимости) -->
+<label class="switchline" style="margin-top:10px">
+  <input type="checkbox" id="showPaymentTerms">
+  Показать условия оплаты
+</label>
+
+<div id="paymentTermsCard">
+  <div class="row" style="margin-top:10px">
+    <label>📦 Ориентировочная дата отгрузки
+      <input id="shipDate" type="date"/>
+    </label>
+
+    <label>💳 Условия оплаты (отсрочка)
+      <select id="payDelay">
+        <option value="5">5 дней</option>
+        <option value="30" selected>30 дней</option>
+        <option value="45">45 дней</option>
+      </select>
+      <span class="small">День оплаты считается от даты отгрузки.</span>
+    </label>
+  </div>
+
+  <div class="row" style="margin-top:10px">
+    <div class="stat">
+      <div class="label">🧾 Ожидаемая дата оплаты</div>
+      <div class="value mono" id="expectedPayDate">—</div>
+      <div class="muted">Автоматически: отгрузка + отсрочка</div>
+    </div>
+
+    <div class="stat">
+      <div class="label">Срок оплаты</div>
+      <div class="value mono" id="payTermText">—</div>
+      <div class="muted">Например: “Отсрочка 30 дней”</div>
+    </div>
+  </div>
 </div>
 </div>
 </div>
@@ -793,6 +845,71 @@ renderTable(items, totals);
 }
 
 // listeners for live recalc
+function toISODate(d){
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+}
+
+function fmtRuDate(iso){
+  if(!iso) return '—';
+  const [y,m,d] = iso.split('-').map(Number);
+  if(!y||!m||!d) return '—';
+  return `${String(d).padStart(2,'0')}.${String(m).padStart(2,'0')}.${y}`;
+}
+
+function updatePaymentTerms(){
+  const ship = document.getElementById('shipDate')?.value || '';
+  const delay = parseInt(document.getElementById('payDelay')?.value || '0', 10);
+
+  const payTermText = document.getElementById('payTermText');
+  if (payTermText) payTermText.textContent = delay ? `Отсрочка ${delay} дней` : '—';
+
+  const out = document.getElementById('expectedPayDate');
+  if(!out){ return; }
+
+  if(!ship || !delay){
+    out.textContent = '—';
+    return;
+  }
+
+  const base = new Date(ship + 'T00:00:00');
+  if(Number.isNaN(base.getTime())){
+    out.textContent = '—';
+    return;
+  }
+  base.setDate(base.getDate() + delay);
+  out.textContent = fmtRuDate(toISODate(base));
+}
+
+function initPaymentTermsUI(){
+  const cb = document.getElementById('showPaymentTerms');
+  const card = document.getElementById('paymentTermsCard');
+  if(!cb || !card) return;
+
+  cb.addEventListener('change', ()=>{
+    card.classList.toggle('show', cb.checked);
+    updatePaymentTerms();
+  });
+
+  ['shipDate','payDelay'].forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('change', updatePaymentTerms);
+    el.addEventListener('input', updatePaymentTerms);
+  });
+
+  // default ship date = today (можно удалить при желании)
+  const shipEl = document.getElementById('shipDate');
+  if(shipEl && !shipEl.value){
+    const today = new Date();
+    shipEl.value = toISODate(today);
+  }
+
+  updatePaymentTerms();
+}
+
 function initListeners(){
   // базовые поля
   ['endpoints','partnerDiscount','partnerName','validUntil','discModules','showROI'].forEach(id=>{
@@ -825,6 +942,8 @@ function initListeners(){
 
   // первичная синхронизация видимости полей скидок
   try{syncDiscountUI();}catch(e){}
+
+  try{ initPaymentTermsUI(); }catch(e){}
 }
 
 
@@ -847,6 +966,31 @@ page.style.opacity = "1";
       const partnerDiscountNum = (parseFloat(document.getElementById('partnerDiscount').value||'0')||0);
 const partnerDiscount = partnerDiscountNum.toFixed(0) + '%';
 const showPartnerInPdf = !!(document.getElementById('usePartnerDiscount')?.checked && partnerDiscountNum > 0 && (document.getElementById('partnerName')?.value||'').trim());
+      // Payment terms: include in PDF only when checkbox is ON
+      const __payCb = document.getElementById('showPaymentTerms');
+      const showPayInPdf = !!(__payCb && __payCb.checked);
+      let payBlockHtml = '';
+      if (showPayInPdf) {
+        const shipISO = document.getElementById('shipDate')?.value || '';
+        const delayVal = parseInt(document.getElementById('payDelay')?.value || '0', 10) || 0;
+        const shipFmt = shipISO ? fmtRuDate(shipISO) : '—';
+        let expFmt = '—';
+        if (shipISO) {
+          const d = new Date(shipISO + 'T00:00:00');
+          d.setDate(d.getDate() + delayVal);
+          expFmt = fmtRuDate(toISODate(d));
+        }
+        const payTxt = delayVal > 0 ? ('отсрочка ' + delayVal + ' дней') : 'без отсрочки';
+        payBlockHtml = `
+          <div class="pay-terms" style="margin-top:12px;padding:14px 16px;border:3px solid #000;border-radius:10px;background:#fff;color:#000;font-weight:700">
+            <div style="font-weight:700;margin-bottom:6px">Условия отгрузки и оплаты</div>
+            <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:16px;color:#000;font-weight:700">
+              <div>📦 <strong>Отгрузка:</strong> ${escapeHtml(shipFmt)}</div>
+              <div>💳 <strong>Условия оплаты:</strong> ${escapeHtml(payTxt)}</div>
+              <div>🧾 <strong>Ожидаемая оплата:</strong> ${escapeHtml(expFmt)}</div>
+            </div>
+          </div>`;
+      }
       const today = new Date().toLocaleDateString('ru-RU');
       const validRaw = (document.getElementById('validUntil') && document.getElementById('validUntil').value) ? new Date(document.getElementById('validUntil').value.replace(/-/g,'/')) : null;
       const validFmt = validRaw ? validRaw.toLocaleDateString('ru-RU') : '—';
@@ -864,6 +1008,7 @@ const showPartnerInPdf = !!(document.getElementById('usePartnerDiscount')?.check
           <div><strong>Партнёрская скидка:</strong> ${partnerDiscount}</div>` : ``}
           <div><strong>Действует до:</strong> ${escapeHtml(valOrDash('validUntil'))}</div>
         </div>
+          ${payBlockHtml}
       <div class="ptable" id="pdfTableWrap"></div>
         <div class="footer-note">ООО НЦПР  Инферит ИТМен  Конфиденциально</div>
       `;
@@ -922,7 +1067,7 @@ if (__c && __cNode) __cNode.textContent = __c.textContent;
       const jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
       if(!jsPDF) throw new Error('jsPDF не найден');
       
-const canvas = await html2canvas(page, {scale:2, useCORS:true, backgroundColor:'#ffffff'});
+const canvas = await html2canvas(page, {scale:3, useCORS:true, backgroundColor:'#ffffff'});
 
 // Multi-page A3 landscape: fit width, slice by height
 const pdf = new jsPDF({orientation:'landscape', unit:'pt', format:'a3'});

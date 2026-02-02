@@ -1,50 +1,378 @@
-<!DOCTYPE html>\n<html lang=\"ru\">\n<head>\n  <meta charset=\"utf-8\"/>\n  <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\"/>\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>\n  <title>Kn — Индекс ITMEN (Partner Profit \u00a0v3)</title>\n  <style>\n    :root{--bg:#0b1020;--card:#0f1527;--muted:#f94ab3;--text: #e59ce8;--f237: #f237?;--mint:#10b981;--cyan:#22d3ee;--accent:#34d399}\n    {box-sizing:border-box}\n    body{margin:0;font-family:ui-sans-serif,system-ui,ui-apple-system,sans-serif,Noto Sans,Ubuntu Cantarell,Segoe UI,Roboto,Arial;background:#0b1020;color:var(--text);background:radial-gradient(1200px 800px at 10% 10%,#0b1020 80%),radial-gradient(800px 600px at 110% 10%, #f43f5e26, transparent 50%),linear-gradient(1200px 800px at 10% 50%,#ad5df4a3, #b2406a61);background-attachment:fixed;background-size:cover;position:relative;min-height:100vh}\n    .container{max-width:1200px;margin:32px auto;padding:0 16px;position:relative;z-index:1}\n    .ui-topright-logo{position:fixed;right:16px;top:12px;height:28px}\n    .ui-topright-logo img{height:28px}\n    header{display:flex;gap:12px;align-items:center;min-height:32px;margin:0}.sub{color:var(--muted);font-size:13px}\n    .grid{display:grid;grid-template-columns:1fr;gap:10px}.stats-wrapper{min-height:980px}.grid(grid-template-columns:1fr}\n    h2{font-size:15px;margin:0 0 10px} label{display:grid;gap:6px;font-size:12px;margin:0}\n    input,select,textarea{width:100%;padding:0 12px;border:1px solid #243843;background:#0b1022;color:var(--text)}\n    input:focus,select:focus,textarea:focus{outline:none;box-shadow:0 0 3px #08b91a33,border-color:#1203}\n    textarea{min-height:80px;resize:vertical}\n    .chips{display:flex;flex-wrap:wrap;gap:10px}.chip{border:1px solid #28d9f3;background:#0b1222;padding:10px 12px;border-radius:12px;display:flex;justify-content:center;align-items:center;text-decoration:none;color:var(--text);transition:background 0.2s ease}  .chip:hover{background:#10223c}.chip .close{margin-left:5px;font-size:14px;cursor:pointer;color:var(--muted)}  .chip .close:hover{color:var(--accent)}\n    .stat{display:grid;grid-template-columns:1fr;gap:10px}\n    .stat{background:linear-gradient(180deg,#0b1a33,#081a33),linear-gradient(0deg,#092d33,#23495e26);border-radius:14px;padding:12px}\n    .stat{color:var(--muted);font-size:12px;text-align:center}.mono{font-variant-numeric:tabular-nums}\n    .stat .profit{ background:#0e315f; border:2px solid #344d39; /* green border */ color:#34d399; padding:4px 8px; text-align:left; box-shadow:0 0 3px rgba(52,211,153,.25); border-radius:14px;}\n    .stat .profit .text{font-weight:700}.mono{font-variant-numeric:tabular-nums}\n    #profit-numerator, #profit-denominator { font-weight:600 }\n    .stat.profit .label { color:var(--muted);font-size:12px }.stat .mono{font-variant-numeric:tabular-nums}\n    .card{display:grid;gap:10px;padding:12px;background:#0b1222;border-radius:14px;border:2px solid #234843}\n    .card input,.card select,.card textarea{background:#0b1a2f;color:var(--text);border:1px solid #243843;padding:8px;border-radius:10px}\n    .card input:focus,.card select:focus,.card textarea:focus{outline:none;box-shadow:0 0 3px #08b91a33,border-color:#1203}\n    .row{grid-template-columns:1fr}.row2{grid-template-columns:repeat(2,1fr);gap:10px}.chips{display:flex;flex-wrap:wrap;gap:10px}.chip{display:flex;gap:10px;padding:10px 12px;border-radius:12px;background:#0b1222;border:1px solid #28d9f3;color:#fff;text-decoration:none;align-items:center}.chip:hover{background:#10223c}.chip .close{margin-left:5px;font-size:14px;cursor:pointer;color:#f94ab3}.chip .close:hover{color:#34d399}\n    button { padding: 8px 24px; border-radius: 8px; border: none; background: #2563eb; color: white; cursor: pointer; font-weight: bold; }\n    button:hover { background: #1d4ed8; }\n    table { width: 100%; border-collapse: collapse; margin: 16px 0; }\n    th, td { border: 1px solid #243843; padding: 8px; text-align: left; }\n    th { background: #0b1222; color: var(--muted); }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <header>\n      <svg class=\"ui-topright-logo\" viewBox=\"0 0 448 512\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"currentColor\" height=\"28\"><!-- ... truncated for brevity ... --></svg>\n      <h1>ROI-калькулятор (год) — только лицензии</h1>\n      <span class=\"sub\">Kn — Индекс ITMEN (Partner Profit \u00a0v3)</span>\n    </header>\n    <div class=\"grid\">\n      <label>\n        <span>Кол-во рабочих мест (PM)</span>\n        <input id=\"rm-count\" type=\"number\" placeholder=\"Введите кол-во PM\"/>\n      </label>\n      <label>\n        <span>Клиент</span>\n        <input id=\"client-name\" type=\"text\" placeholder=\"Введите название организации\"/>\n      </label>\n      <label>\n        <span>Лицензии (добавляй несколько)</span>\n        <div style=\"display:flex;gap:8px\">\n          <select id=\"license-type-select\" style=\"flex:1\">\n            <option value=\"windows_pro\">Microsoft Windows (Pro/Enterprise)</option>\n            <option value=\"office365\">Microsoft Office 365</option>\n            <option value=\"others\">Прочие</option>\n          </select>\n          <input id=\"license-count-input\" type=\"number\" placeholder=\"0\" style=\"width:80px\"/>\n          <button id=\"add-license\" type=\"button\">+ Добавить</button>\n        </div>\n      </label>\n    </div>\n    <h3>Лицензии</h3>\n    <table id=\"licenses-table\">\n      <thead>\n        <tr><th>Лицензия</th><th>Кол-во</th><th>Цена за 1/год</th><th>Итого/год</th><th></th></tr>\n      </thead>\n      <tbody></tbody>\n    </table>\n    <button id=\"calculate-roi\">Рассчитать ROI</button>\n    <div id=\"results\">\n      <div class=\"stat profit\"><span class=\"label\">Потенциал экономии (₽/год)</span> <span class=\"mono\" id=\"profit-amount\">0 ₽</span></div>\n      <div class=\"stat profit\"><span class=\"label\">ROI (%) / Окупаемость (лет)</span> <span class=\"mono\" id=\"roi-value\">0 % / 0</span></div>\n    </div>\n  </div>\n  <script>\nconst LEADS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbzY0v3ZZ1TAzTneF4NRmrP4j8RD6vJ3s6dxVMeZmWYUza_N6ZvoW-kFnA63ybhYbU_ExQ/exec';\n\nconst licensePricing = {\n  windows_pro: 8000, // price per license per year\n  office365: 6000,\n  others: 5000\n};\n\nconst licenseNameMap = {\n  windows_pro: 'Microsoft Windows (Pro/Enterprise)',\n  office365: 'Microsoft Office 365',\n  others: 'Прочие'\n};\n\nconst addedLicenses = {};\n\nfunction updateLicensesTable() {\n  const tbody = document.getElementById('licenses-table').querySelector('tbody');\n  tbody.innerHTML = '';\n  Object.entries(addedLicenses).forEach(([key, count]) => {\n    const tr = document.createElement('tr');\n    const price = licensePricing[key];\n    const total = price * count;\n    tr.innerHTML = `\n      <td>${licenseNameMap[key]}</td>\n      <td>${count}</td>\n      <td>${price} ₽</td>\n      <td>${total.toLocaleString('ru-RU')} ₽</td>\n      <td><button data-key="${key}" class="remove-license">x</button></td>\n    `;\n    tbody.appendChild(tr);\n  });\n}\n\ndocument.getElementById('add-license').addEventListener('click', () => {\n  const type = document.getElementById('license-type-select').value;\n  const count = parseInt(document.getElementById('license-count-input').value, 10);\n  if (type && count > 0) {\n    addedLicenses[type] = (addedLicenses[type] || 0) + count;\n    updateLicensesTable();\n    document.getElementById('license-count-input').value = '';
-  }
-});
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>ROI калькулятор (год) — только лицензии</title>
+  <style>
+    :root { font-family: Arial, sans-serif; }
+    body { margin: 0; background: #f6f7fb; }
+    .wrap { max-width: 860px; margin: 0 auto; padding: 20px; }
+    .card { background: #fff; border-radius: 14px; padding: 16px; box-shadow: 0 6px 18px rgba(0,0,0,.06); }
+    h1 { font-size: 18px; margin: 0 0 10px; }
+    .grid { display: grid; gap: 12px; grid-template-columns: repeat(12, 1fr); }
+    .col-12 { grid-column: span 12; }
+    label { display: block; font-size: 12px; color: #444; margin-bottom: 6px; }
+    input, select, button { width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #d9dbe3; }
+    input[type="number"] { appearance: textfield; }
+    button { cursor: pointer; border: 0; background: #2f6fed; color: white; font-weight: 700; }
+    button.secondary { background: #e9ecf5; color: #222; border: 1px solid #d9dbe3; }
+    .small { font-size: 12px; color: #666; margin-top: 8px; }
+    .kpi { display: grid; gap: 10px; grid-template-columns: repeat(2, 1fr); margin-top: 14px; align-items: stretch; }
+    .kpi .box { background:#fafbff; border:1px solid #eef0f6; border-radius: 14px; padding: 12px; }
+    .kpi .name { font-size: 12px; color:#555; }
+    .kpi .val { font-size: 18px; font-weight: 800; margin-top: 6px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; overflow: hidden; border-radius: 12px; }
+    .kpi-roi{grid-column: auto;}
+    th, td { padding: 10px; border-bottom: 1px solid #eef0f6; text-align: left; vertical-align: middle; }
+    th { font-size: 12px; color: #555; background: #fafbff; }
+    .right { text-align: right; }
+    .row-actions { display:flex; gap:10px; align-items: end; }
+    .row-actions > div { flex: 1; }
+    .dirty { color:#9a4b00; }
+    @media (max-width: 720px){
+      .kpi { grid-template-columns: 1fr; }
+    }
+  .hidden{display:none !important;}
+    .hideCost{display:none !important;}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>ROI-калькулятор (год) — только лицензии</h1>
 
-document.getElementById('licenses-table').addEventListener('click', (e) => {
-  if (e.target.classList.contains('remove-license')) {
-    const key = e.target.getAttribute('data-key');
-    delete addedLicenses[key];
-    updateLicensesTable();
-  }
-});
+      <div class="grid">
 
-document.getElementById('calculate-roi').addEventListener('click', () => {
-  const rmCount = parseInt(document.getElementById('rm-count').value, 10);
-  if (!rmCount || rmCount <= 0) {
-    alert('Введите корректное количество рабочих мест');
+        <div class="col-12">
+          <label>Клиент (организация)</label>
+          <input id="client" type="text" placeholder="Введите название организации" />
+        </div>
+
+        <div class="col-12">
+          <label>Кол-во рабочих мест (РМ)</label>
+          <input id="workplaces" type="number" min="0" placeholder="Введите кол-во РМ" />
+        </div>
+        <div class="col-12">
+          <label>Лицензии (добавляй несколько)</label>
+          <div class="row-actions">
+            <div style="flex:2;">
+              <select id="license"></select>
+            </div>
+            <div>
+              <input id="qty" type="number" min="0" value="50" placeholder="Кол-во" />
+            </div>
+            <div style="width:180px; flex:0 0 180px;">
+              <button id="addBtn" class="secondary" type="button">+ Добавить</button>
+            </div>
+          </div>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Лицензия</th>
+                <th class="right">Кол-во</th>
+                <th class="right hideCost">Цена за 1/год</th>
+                <th class="right hideCost">Итого/год</th>
+                <th style="width:1%;"></th>
+              </tr>
+            </thead>
+            <tbody id="listBody">
+              <tr id="emptyRow"><td colspan="5" class="small">Пока ничего не добавлено. Выбери лицензию, укажи кол-во и нажми “Добавить”.</td></tr>
+            </tbody>
+          </table>
+
+          <div class="small">
+            <span id="dirtyNote" class="dirty" style="display:none;">Есть изменения — нажмите «Рассчитать ROI» ещё раз.</span>
+          </div>
+        </div>
+
+        <div class="col-12">
+          <button id="calcBtn" type="button">Рассчитать ROI</button>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="box hidden">
+          <div class="name">Затраты на лицензии (₽/год)</div>
+          <div class="val" id="kpiCurrent">—</div>
+        </div>
+        <div class="box">
+          <div class="name">Потенциал экономии (₽/год)</div>
+          <div class="val" id="kpiSavings">—</div>
+        </div>
+        <div class="box hidden">
+          <div class="name">Инвестиции (₽/год)</div>
+          <div class="val" id="kpiInvest">—</div>
+        </div>
+        <div class="box kpi-roi">
+          <div class="name">ROI (%) / Окупаемость (лет)</div>
+          <div class="val" id="kpiRoiPayback">—</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+<script>
+
+// ====== Lead capture (Google Sheets via Apps Script Web App) ======
+const LEADS_ENDPOINT = "https://script.google.com/macros/s/AKfycbzY0v3ZZ1TAzTneF4NRmrP4j8RD6vJ3s6dxVMeZmWYUza_N6ZvoW-kFnA63ybhYbU_ExQ/exec"; // вставь сюда URL веб-приложения Apps Script
+
+async function sendLead(payload){
+  if (!LEADS_ENDPOINT) return;
+
+  try{
+    const body = JSON.stringify(payload);
+
+    // 1) Самый надёжный способ для логирования без CORS: sendBeacon
+    if (navigator && typeof navigator.sendBeacon === "function"){
+      const blob = new Blob([body], { type: "text/plain;charset=utf-8" });
+      const ok = navigator.sendBeacon(LEADS_ENDPOINT, blob);
+      if (ok) return;
+    }
+
+    // 2) Fallback: fetch без CORS-проверки (запрос уйдёт, но ответа мы не читаем)
+    await fetch(LEADS_ENDPOINT, {
+      method: "POST",
+      mode: "no-cors",
+      body
+    });
+  }catch(e){
+    // молча: не пугаем клиента
+  }
+}
+// ================================================================
+
+const LICENSE_CATALOG = [
+  { id: "ms_office_m365", name: "Microsoft Office / Microsoft 365", pricePerYear: 12000 },
+  { id: "ms_windows",      name: "Microsoft Windows (Pro/Enterprise)", pricePerYear: 8000 },
+  { id: "adobe_acrobat",   name: "Adobe Acrobat Pro", pricePerYear: 18000 },
+  { id: "adobe_cc",        name: "Adobe Creative Cloud", pricePerYear: 65000 },
+  { id: "autocad",         name: "AutoCAD", pricePerYear: 120000 },
+  { id: "1c",              name: "1С:Предприятие (пользовательская)", pricePerYear: 18000 },
+  { id: "antivirus",       name: "Антивирус (Kaspersky/Dr.Web/аналог)", pricePerYear: 2500 },
+  { id: "ms_visio",        name: "Microsoft Visio", pricePerYear: 15000 },
+  { id: "ms_project",      name: "Microsoft Project", pricePerYear: 20000 },
+  { id: "powerbi",         name: "Power BI Pro", pricePerYear: 12000 },
+  { id: "zoom",            name: "Zoom (Pro/Business)", pricePerYear: 14000 },
+  { id: "slack",           name: "Slack / корпоративный мессенджер", pricePerYear: 16000 },
+  { id: "atlassian",       name: "Atlassian (Jira/Confluence)", pricePerYear: 30000 },
+  { id: "jetbrains",       name: "JetBrains (IDE)", pricePerYear: 35000 },
+  { id: "anydesk",         name: "AnyDesk / TeamViewer (удалённый доступ)", pricePerYear: 9000 },
+  { id: "vmware",          name: "VMware (инфраструктура)", pricePerYear: 90000 },
+  { id: "citrix",          name: "Citrix (виртуализация рабочих мест)", pricePerYear: 110000 },
+  { id: "mssql",           name: "MS SQL Server (усреднённо)", pricePerYear: 200000 },
+  { id: "oracle",          name: "Oracle DB (усреднённо)", pricePerYear: 250000 },
+  { id: "sap",             name: "SAP (усреднённо)", pricePerYear: 300000 },
+];
+
+// Скрытые допущения (клиенту не показываем)
+const OPTIMIZATION_PCT = 0.20; // экономия 20% от затрат на лицензии
+// Чтобы ROI НЕ был константой, инвестиции считаем НЕ как % от суммы, а как базу + нагрузку от количества лицензий
+const INVEST_BASE = 250000;     // базовая инвестиция, ₽/год
+const INVEST_PER_LICENSE = 600; // ₽/год за 1 "единицу лицензии" (по кол-ву)
+
+function fmtRub(n){
+  if (!isFinite(n)) return "—";
+  const rounded = Math.round(n);
+  return rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ") + " ₽";
+}
+function fmtNum(n){
+  if (!isFinite(n)) return "—";
+  return (Math.round(n*10)/10).toString();
+}
+
+const kpiIds = ["kpiCurrent","kpiSavings","kpiInvest","kpiRoiPayback"];
+function resetKpis(){
+  for (const id of kpiIds) document.getElementById(id).textContent = "—";
+}
+
+let hasCalculated = false;
+const dirtyNote = document.getElementById("dirtyNote");
+function markDirty(){
+  if (!hasCalculated) return;
+  dirtyNote.style.display = "inline";
+}
+function clearDirty(){ dirtyNote.style.display = "none"; }
+
+const sel = document.getElementById("license");
+for (const item of LICENSE_CATALOG){
+  const opt = document.createElement("option");
+  opt.value = item.id;
+  opt.textContent = item.name;
+  sel.appendChild(opt);
+}
+sel.value = LICENSE_CATALOG[0].id;
+
+function getItem(id){ return LICENSE_CATALOG.find(x => x.id === id); }
+
+const listBody = document.getElementById("listBody");
+const emptyRow = document.getElementById("emptyRow");
+const selected = new Map();
+
+function renderList(){
+  listBody.innerHTML = "";
+  if (selected.size === 0){
+    listBody.appendChild(emptyRow);
     return;
   }
 
-  const totalLicenseCost = Object.entries(addedLicenses).reduce((sum, [key, count]) => sum + licensePricing[key] * count, 0);
-  const potentialSavings = totalLicenseCost * 0.2; // 20% savings estimate
+  for (const [licenseId, row] of selected.entries()){
+    const tr = document.createElement("tr");
 
-  const roiPercent = (potentialSavings / totalLicenseCost) * 100;
-  const payback = (totalLicenseCost - potentialSavings) / potentialSavings;
+    const td1 = document.createElement("td");
+    td1.textContent = row.name;
 
-  document.getElementById('profit-amount').innerText = `${potentialSavings.toLocaleString('ru-RU')} ₽`;
-  document.getElementById('roi-value').innerText = `${roiPercent.toFixed(1)} % / ${payback.toFixed(1)}`;
+    const td2 = document.createElement("td");
+    td2.className = "right";
+    const qtyInput = document.createElement("input");
+    qtyInput.type = "number";
+    qtyInput.min = "0";
+    qtyInput.value = String(row.qty);
+    qtyInput.style.maxWidth = "140px";
+    qtyInput.style.textAlign = "right";
+    td2.appendChild(qtyInput);
 
-  // Send leads
-  const clientName = document.getElementById('client-name').value;
-  const licenseList = Object.keys(addedLicenses).map(key => licenseNameMap[key]);
-  const licenseAmounts = Object.values(addedLicenses);
-  const data = {
-    client: clientName,
-    rmCount: rmCount,
-    licenses: licenseList,
-    licenseAmounts: licenseAmounts
+    const td3 = document.createElement("td");
+    td3.className = "right hideCost";
+    td3.textContent = fmtRub(row.pricePerYear);
+
+    const td4 = document.createElement("td");
+    td4.className = "right hideCost";
+    const totalSpan = document.createElement("span");
+    totalSpan.textContent = fmtRub(row.qty * row.pricePerYear);
+    td4.appendChild(totalSpan);
+
+    const td5 = document.createElement("td");
+    const delBtn = document.createElement("button");
+    delBtn.type = "button";
+    delBtn.className = "secondary";
+    delBtn.textContent = "✕";
+    delBtn.style.width = "44px";
+    td5.appendChild(delBtn);
+
+    qtyInput.addEventListener("input", () => {
+      const q = Number(qtyInput.value || 0);
+      const r = selected.get(licenseId);
+      r.qty = q;
+      selected.set(licenseId, r);
+      totalSpan.textContent = fmtRub(q * r.pricePerYear);
+      markDirty();
+    });
+
+    delBtn.addEventListener("click", () => {
+      selected.delete(licenseId);
+      renderList();
+      markDirty();
+    });
+
+    tr.appendChild(td1);
+    tr.appendChild(td2);
+    tr.appendChild(td3);
+    tr.appendChild(td4);
+    tr.appendChild(td5);
+    listBody.appendChild(tr);
+  }
+}
+
+function addSelected(){
+  const licenseId = sel.value;
+  const qty = Number(document.getElementById("qty").value || 0);
+  const item = getItem(licenseId);
+  if (!item) return;
+
+  const existing = selected.get(licenseId);
+  const newQty = (existing ? existing.qty : 0) + qty;
+
+  selected.set(licenseId, { name: item.name, pricePerYear: item.pricePerYear, qty: newQty });
+  document.getElementById("qty").value = "0";
+
+  renderList();
+  markDirty();
+}
+
+function sumCurrentCost(){
+  let total = 0;
+  for (const r of selected.values()){
+    total += (Number(r.qty || 0) * Number(r.pricePerYear || 0));
+  }
+  return total;
+}
+function sumTotalLicenses(){
+  let totalQty = 0;
+  for (const r of selected.values()){
+    totalQty += Number(r.qty || 0);
+  }
+  return totalQty;
+}
+
+
+function buildLeadPayload(savings, roi, paybackYears){
+  const client = (document.getElementById("client")?.value || "").trim();
+  const workplaces = Number(document.getElementById("workplaces")?.value || 0);
+
+  const licenses = [];
+  let licensesTotalQty = 0;
+
+  for (const r of selected.values()){
+    const qty = Number(r.qty || 0);
+    licensesTotalQty += qty;
+    licenses.push({ name: r.name, qty });
+  }
+
+  const licensesText = licenses.map(x => `${x.name}: ${x.qty}`).join("; ");
+
+  return {
+    ts: new Date().toISOString(),
+    client,
+    workplaces,
+    licenses,
+    licensesText,
+    licensesTotalQty,
+    savingsRub: Math.round(savings || 0),
+    roiPct: (isFinite(roi) ? Math.round(roi * 10) / 10 : null),
+    paybackYears: (isFinite(paybackYears) ? Math.round(paybackYears * 10) / 10 : null),
   };
-  fetch(LEADS_ENDPOINT, {
-    method: 'POST',
-    mode: 'no-cors',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(data)
-  }).catch(err => console.error(err));
-});
+}
+
+
+function calc(){
+  const current = sumCurrentCost();                 // ₽/год
+  const savings = current * OPTIMIZATION_PCT;       // ₽/год
+  const totalLicenses = sumTotalLicenses();         // шт
+
+  // Инвестиции зависят от количества лицензий (а не от суммы), поэтому ROI меняется
+  const investment = INVEST_BASE + (totalLicenses * INVEST_PER_LICENSE);
+
+  let roi = NaN;
+  let paybackYears = NaN;
+  if (investment > 0){
+    roi = ((savings - investment) / investment) * 100;
+    paybackYears = savings > 0 ? (investment / savings) : Infinity;
+  }
+
+  document.getElementById("kpiCurrent").textContent = fmtRub(current);
+  document.getElementById("kpiSavings").textContent = fmtRub(savings);
+  document.getElementById("kpiInvest").textContent = fmtRub(investment);
+  document.getElementById("kpiRoiPayback").textContent =
+    (isFinite(roi) ? (fmtNum(roi) + " %") : "—") + " / " +
+    (isFinite(paybackYears) ? fmtNum(paybackYears) : (paybackYears === Infinity ? "∞" : "—"));
+
+  // отправляем данные в Google Sheets (после клика «Рассчитать ROI»)
+  const payload = buildLeadPayload(savings, roi, paybackYears);
+  sendLead(payload);
+
+  hasCalculated = true;
+  clearDirty();
+}
+
+document.getElementById("addBtn").addEventListener("click", addSelected);
+document.getElementById("calcBtn").addEventListener("click", calc);
+document.getElementById("qty").addEventListener("keydown", (e) => { if (e.key === "Enter") addSelected(); });
+
+resetKpis();
+renderList();
 </script>
 </body>
 </html>

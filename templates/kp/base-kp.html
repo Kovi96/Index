@@ -1,0 +1,86 @@
+<style>
+  .doc {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #111827;
+    font-size: 18px;
+    line-height: 1.4;
+  }
+  .top {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    border-bottom: 2px solid #111827;
+    padding-bottom: 10px;
+    margin-bottom: 18px;
+  }
+  .brand {
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+  }
+  .muted { color: #4b5563; }
+  .title {
+    font-size: 30px;
+    font-weight: 800;
+    margin: 6px 0 10px 0;
+  }
+  .meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 18px;
+    margin: 12px 0 18px 0;
+    padding: 14px;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+  }
+  .label { font-weight: 700; }
+  .section-title {
+    margin: 14px 0 10px 0;
+    font-size: 23px;
+    font-weight: 800;
+  }
+  .pricing {
+    margin-top: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .totals {
+    margin-top: 14px;
+    font-size: 21px;
+    font-weight: 800;
+  }
+</style>
+
+<div class="doc">
+  <div class="top">
+    <div>
+      <div class="brand">Инферит ИТМен</div>
+      <div class="muted">Коммерческое предложение</div>
+    </div>
+    <div style="text-align:right">
+      <div><span class="label">Дата:</span> {{today}}</div>
+      <div><span class="label">Клиент:</span> {{client_name}}</div>
+    </div>
+  </div>
+
+  <div class="title">КП на поставку лицензий и услуг</div>
+
+  <div class="meta">
+    <div><span class="label">Менеджер:</span> {{manager_name}}</div>
+    <div><span class="label">Телефон:</span> {{manager_phone}}</div>
+    <div><span class="label">Email:</span> {{manager_email}}</div>
+    <div><span class="label">Тип лицензии:</span> {{license_type}}</div>
+    <div><span class="label">Поддержка:</span> {{support_tier}}</div>
+    <div><span class="label">Количество точек:</span> {{endpoints}}</div>
+  </div>
+
+  <div class="section-title">Спецификация</div>
+  <div class="pricing">{{table_html}}</div>
+
+  <div class="totals">
+    <div>Итого без НДС: {{total_no_vat}}</div>
+    <div>Итого с НДС: {{total_with_vat}}</div>
+  </div>
+</div>

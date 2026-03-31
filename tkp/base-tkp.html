@@ -1,0 +1,153 @@
+<style>
+  .doc {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #111827;
+    font-size: 18px;
+    line-height: 1.45;
+  }
+  .top {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    border-bottom: 2px solid #111827;
+    padding-bottom: 10px;
+    margin-bottom: 16px;
+  }
+  .brand {
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+  }
+  .muted { color: #4b5563; }
+  .title {
+    font-size: 31px;
+    font-weight: 800;
+    margin: 8px 0 10px 0;
+  }
+  .meta {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 18px;
+    margin: 8px 0 14px 0;
+    padding: 14px;
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+  }
+  .label { font-weight: 700; }
+  .section-title {
+    margin: 14px 0 10px 0;
+    font-size: 23px;
+    font-weight: 800;
+  }
+  .intro {
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 12px 14px;
+    background: #fafafa;
+  }
+  .module-block h2 {
+    font-size: 28px !important;
+    margin-top: 14px !important;
+  }
+  .module-block h3 {
+    font-size: 22px !important;
+  }
+  .module-block p, .module-block li {
+    font-size: 17px !important;
+  }
+  .pricing {
+    margin-top: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .totals {
+    margin-top: 14px;
+    font-size: 21px;
+    font-weight: 800;
+  }
+</style>
+
+<div class="doc">
+  <div class="top">
+    <div>
+      <div class="brand">Инферит ИТМен</div>
+      <div class="muted">Технико-коммерческое предложение</div>
+    </div>
+    <div style="text-align:right">
+      <div><span class="label">Дата:</span> {{today}}</div>
+      <div><span class="label">Клиент:</span> {{client_name}}</div>
+    </div>
+  </div>
+
+  <div class="title">ИТМен: функциональность по модулям и бизнес-задачи</div>
+
+  <div class="meta">
+    <div><span class="label">Менеджер:</span> {{manager_name}}</div>
+    <div><span class="label">Телефон:</span> {{manager_phone}}</div>
+    <div><span class="label">Email:</span> {{manager_email}}</div>
+    <div><span class="label">Тип лицензии:</span> {{license_type}}</div>
+    <div><span class="label">Поддержка:</span> {{support_tier}}</div>
+    <div><span class="label">Количество точек:</span> {{endpoints}}</div>
+  </div>
+
+  <div class="intro">
+    В документ включены выбранные модули и спецификация расчета. Лист технической поддержки
+    входит в состав ТКП по умолчанию.
+  </div>
+
+  <div class="section-title">Описание модулей</div>
+  <div class="module-block">{{module_sections}}</div>
+</div>
+
+<!--PAGE_BREAK-->
+
+<style>
+  .doc2 {
+    font-family: Arial, Helvetica, sans-serif;
+    color: #111827;
+    font-size: 18px;
+    line-height: 1.45;
+  }
+  .head2 {
+    border-bottom: 2px solid #111827;
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .head2 .h {
+    font-size: 30px;
+    font-weight: 800;
+  }
+  .small {
+    color: #6b7280;
+    font-size: 16px;
+  }
+  .pricing2 {
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .totals2 {
+    margin-top: 14px;
+    font-size: 21px;
+    font-weight: 800;
+  }
+</style>
+
+<div class="doc2">
+  <div class="head2">
+    <div class="h">Пример расчета стоимости проекта</div>
+    <div class="small">Клиент: {{client_name}}</div>
+  </div>
+
+  <div class="pricing2">{{table_html}}</div>
+
+  <div class="totals2">
+    <div>Итого без НДС: {{total_no_vat}}</div>
+    <div>Итого с НДС: {{total_with_vat}}</div>
+  </div>
+</div>

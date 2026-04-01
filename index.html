@@ -1197,6 +1197,17 @@ function normalizeTemplateList(list, docType){
     }));
 }
 
+/** option value = docType + ':' + id. Если id — URL, в нём много ':'; split(':') ломает выбор шаблона. */
+function parseTemplateSelectValue(v){
+  const s = String(v || '');
+  const i = s.indexOf(':');
+  if (i < 1) return null;
+  const type = s.slice(0, i);
+  const id = s.slice(i + 1);
+  if ((type !== 'kp' && type !== 'tkp') || !id) return null;
+  return { type, id };
+}
+
 function setTemplateOptions(){
   const sel = document.getElementById('templateSelect');
   if (!sel) return;
@@ -1246,7 +1257,7 @@ async function loadTemplateRegistry(){
   setTemplateOptions();
 }
 
-function initTemplateUI(){
+async function initTemplateUI(){
   const sel = document.getElementById('templateSelect');
   if (sel) {
     sel.addEventListener('change', () => {
@@ -1254,15 +1265,13 @@ function initTemplateUI(){
       TEMPLATE_STATE.selected.kp = '';
       TEMPLATE_STATE.selected.tkp = '';
       TEMPLATE_STATE.selectedType = 'kp';
-      if (!v || !v.includes(':')) return;
-      const [type, id] = v.split(':');
-      if ((type === 'kp' || type === 'tkp') && id) {
-        TEMPLATE_STATE.selectedType = type;
-        TEMPLATE_STATE.selected[type] = id;
-      }
+      const parsed = parseTemplateSelectValue(v);
+      if (!parsed) return;
+      TEMPLATE_STATE.selectedType = parsed.type;
+      TEMPLATE_STATE.selected[parsed.type] = parsed.id;
     });
   }
-  loadTemplateRegistry();
+  await loadTemplateRegistry();
 }
 
 function renderTemplateString(html, ctx){
@@ -2181,7 +2190,7 @@ function setupTKP() {
 fillSupportTiers();
 initModules();
 initListeners();
-initTemplateUI();
+initTemplateUI().catch(e => console.warn(e));
 recalc();
 setupPDF();
 setupTKP();

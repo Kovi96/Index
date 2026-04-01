@@ -1360,35 +1360,7 @@ async function fetchTemplatePayload(fileUrl){
 }
 
 function makeTemplateOverlayHtml(type, ctx, pageNo){
-  if (type === 'kp') {
-    return `
-      <div style="font-family:Arial,Helvetica,sans-serif;color:#111;background:rgba(255,255,255,.9);border-radius:12px;padding:16px;border:1px solid #ddd;">
-        <div style="font-size:24px;font-weight:700;margin-bottom:8px;">Коммерческое предложение</div>
-        <div style="font-size:14px;margin-bottom:10px;"><strong>Клиент:</strong> ${ctx.client_name} &nbsp; <strong>Дата:</strong> ${ctx.today}</div>
-        <div style="font-size:14px;margin-bottom:8px;"><strong>Менеджер:</strong> ${ctx.manager_name} | ${ctx.manager_phone}${ctx.manager_email ? (' | ' + ctx.manager_email) : ''}</div>
-        <div style="font-size:13px;line-height:1.25;">${ctx.table_html}</div>
-        <div style="margin-top:10px;font-size:16px;font-weight:700;">Итого без НДС: ${ctx.total_no_vat}</div>
-        <div style="font-size:16px;font-weight:700;">Итого с НДС: ${ctx.total_with_vat}</div>
-      </div>
-    `;
-  }
-  if (pageNo === 1) {
-    return `
-      <div style="font-family:Arial,Helvetica,sans-serif;color:#111;background:rgba(255,255,255,.9);border-radius:12px;padding:16px;border:1px solid #ddd;">
-        <div style="font-size:24px;font-weight:700;margin-bottom:8px;">ИТМен: функциональность по модулям и бизнес-задачи</div>
-        <div style="font-size:14px;margin-bottom:10px;"><strong>Клиент:</strong> ${ctx.client_name} &nbsp; <strong>Дата:</strong> ${ctx.today}</div>
-        <div style="font-size:13px;line-height:1.25;">${ctx.module_sections}</div>
-      </div>
-    `;
-  }
-  return `
-    <div style="font-family:Arial,Helvetica,sans-serif;color:#111;background:rgba(255,255,255,.9);border-radius:12px;padding:16px;border:1px solid #ddd;">
-      <div style="font-size:24px;font-weight:700;margin-bottom:8px;">Пример расчета стоимости проекта</div>
-      <div style="font-size:13px;line-height:1.25;">${ctx.table_html}</div>
-      <div style="margin-top:10px;font-size:16px;font-weight:700;">Итого без НДС: ${ctx.total_no_vat}</div>
-      <div style="font-size:16px;font-weight:700;">Итого с НДС: ${ctx.total_with_vat}</div>
-    </div>
-  `;
+  return '';
 }
 
 async function renderTemplateAssetPages(type, tpl, ctx, printHost){
@@ -1438,7 +1410,7 @@ async function renderTemplateAssetPages(type, tpl, ctx, printHost){
   }
   if (!bgImages.length) return false;
 
-  const neededPages = type === 'tkp' ? 2 : 1;
+  const neededPages = Math.max(1, bgImages.length);
   for (let i = 0; i < neededPages; i += 1) {
     const page = document.createElement('div');
     page.className = 'a3page';
@@ -1449,11 +1421,14 @@ async function renderTemplateAssetPages(type, tpl, ctx, printHost){
     page.style.backgroundSize = 'cover';
     page.style.backgroundPosition = 'center';
     page.style.backgroundRepeat = 'no-repeat';
-    const inner = document.createElement('div');
-    inner.className = 'page-inner';
-    inner.style.padding = '42px 54px 78px 54px';
-    inner.innerHTML = makeTemplateOverlayHtml(type, ctx, i + 1);
-    page.appendChild(inner);
+    const overlay = makeTemplateOverlayHtml(type, ctx, i + 1);
+    if (overlay) {
+      const inner = document.createElement('div');
+      inner.className = 'page-inner';
+      inner.style.padding = '42px 54px 78px 54px';
+      inner.innerHTML = overlay;
+      page.appendChild(inner);
+    }
     printHost.appendChild(page);
   }
   return true;

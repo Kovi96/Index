@@ -1398,11 +1398,11 @@ async function loadTemplateBackgroundImages(tpl){
     if (pdfDoc.numPages < 1) return [];
     // Одна эталонная страница PDF — макет «как должно выглядеть»; её же подкладываем под каждую страницу с модулями и ТП.
     const page = await pdfDoc.getPage(1);
-    const vp = page.getViewport({ scale: 2 });
+    const vp = page.getViewport({ scale: 2.75 });
     const c = document.createElement('canvas');
     c.width = vp.width; c.height = vp.height;
     await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
-    return [c.toDataURL('image/jpeg', 0.9)];
+    return [c.toDataURL('image/jpeg', 0.92)];
   }
   return [];
 }
@@ -1877,19 +1877,24 @@ function renderTkpClassicPage(host, contentHtml, pageNo, totalPages, logoSrc, bg
     </div>
   `;
   const finalLogoSrc = logoSrc || document.querySelector('.ui-topright-logo img')?.src || document.querySelector('img[alt="Инферит"]')?.src || '';
-  if (finalLogoSrc) {
+  // С фоном из PDF шаблона логотип уже в макете — второй <img> даёт сдвиг и «двойную» иконку.
+  if (finalLogoSrc && !bgImage) {
     const logoWrap = document.createElement('div');
     logoWrap.style.display = 'flex';
     logoWrap.style.justifyContent = 'flex-start';
     logoWrap.style.alignItems = 'center';
     logoWrap.style.margin = '0 0 18px 0';
-    logoWrap.style.minHeight = '92px';
+    logoWrap.style.minHeight = '88px';
     const logoClone = document.createElement('img');
     logoClone.setAttribute('src', finalLogoSrc);
     logoClone.setAttribute('alt', 'Инферит ИТМен');
-    logoClone.style.height = '92px';
-    logoClone.style.maxWidth = '620px';
+    logoClone.draggable = false;
+    logoClone.style.height = 'auto';
+    logoClone.style.maxHeight = '88px';
+    logoClone.style.width = 'auto';
+    logoClone.style.maxWidth = '520px';
     logoClone.style.objectFit = 'contain';
+    logoClone.style.objectPosition = 'left center';
     logoClone.style.display = 'block';
     logoWrap.appendChild(logoClone);
     inner.prepend(logoWrap);

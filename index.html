@@ -2089,7 +2089,12 @@ function setupTKP() {
       const totalPages = pages.length;
       const tkpLogoSrc = (await resolveTkpLogoSrc()) || TKP_LOGO_DATA_URL || '';
       pages.forEach((html, idx) => {
-        const bg = templateBgImages.length ? templateBgImages[Math.min(idx, templateBgImages.length - 1)] : '';
+        const isLastPage = idx === (pages.length - 1);
+        // For this TKP profile:
+        // - module/support pages use a clean template page background (usually first page),
+        // - final spec page stays dynamic without table-as-background.
+        const moduleBg = templateBgImages.length ? templateBgImages[0] : '';
+        const bg = isLastPage ? '' : moduleBg;
         renderTkpClassicPage(printHost, html, idx + 1, totalPages, tkpLogoSrc, bg);
       });
       await waitForImagesReady(printHost);

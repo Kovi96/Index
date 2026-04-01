@@ -1390,7 +1390,9 @@ async function loadTemplateBackgroundImages(tpl){
       const payload = await fetchTemplatePayload(tpl.file);
       if (payload.mode === 'base64') ab = decodeBase64ToUint8Array(payload.base64).buffer;
       else if (payload.mode === 'arrayBuffer') ab = payload.buffer;
-    } catch(e) {}
+    } catch(e) {
+      console.warn('ТКП: не удалось загрузить PDF шаблона', tpl?.file, e);
+    }
     if (!ab) return [];
     const pdfDoc = await pdfjsLib.getDocument({ data: ab }).promise;
     if (pdfDoc.numPages < 1) return [];
@@ -1526,7 +1528,7 @@ async function tryRenderTemplatePdf(type, items, totals){
   const pdfW = pdf.internal.pageSize.getWidth();
   const pdfH = pdf.internal.pageSize.getHeight();
   for (let i = 0; i < pageNodes.length; i += 1) {
-    const canvas = await html2canvas(pageNodes[i], {scale:2, useCORS:true, backgroundColor:'#ffffff'});
+    const canvas = await html2canvasCapture(pageNodes[i]);
     const imgData = canvas.toDataURL('image/jpeg', 0.84);
     if (i > 0) pdf.addPage();
     pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
@@ -1687,7 +1689,7 @@ if (__c && __cNode) __cNode.textContent = __c.textContent;
       const jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
       if(!jsPDF) throw new Error('jsPDF не найден');
       
-const canvas = await html2canvas(page, {scale:2, useCORS:true, backgroundColor:'#ffffff'});
+const canvas = await html2canvasCapture(page);
 
 // Multi-page A3 landscape: fit width, slice by height
 const pdf = new jsPDF({orientation:'landscape', unit:'pt', format:'a3', compress:true});
@@ -1841,16 +1843,21 @@ function renderTkpClassicPage(host, contentHtml, pageNo, totalPages, logoSrc, bg
   const page = document.createElement('div');
   page.className = 'a3page';
   page.style.background = '#fff';
+  page.style.position = 'relative';
+  page.style.overflow = 'hidden';
   if (bgImage) {
-    page.style.backgroundImage = `url('${bgImage}')`;
-    page.style.backgroundSize = 'cover';
-    page.style.backgroundPosition = 'center';
-    page.style.backgroundRepeat = 'no-repeat';
+    const bgImg = document.createElement('img');
+    bgImg.src = bgImage;
+    bgImg.setAttribute('alt', '');
+    bgImg.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;pointer-events:none;user-select:none;';
+    page.appendChild(bgImg);
   }
   page.style.width = '1754px';
   page.style.height = '1240px';
   const inner = document.createElement('div');
   inner.className = 'page-inner';
+  inner.style.position = 'relative';
+  inner.style.zIndex = '1';
   inner.style.padding = '42px 54px 78px 54px';
   inner.style.gap = '10px';
   inner.style.fontFamily = 'Arial, Helvetica, sans-serif';
@@ -1974,6 +1981,36 @@ function buildTkpPriceTableHtml(items, totals){
       </tfoot>
     </table>
   `;
+}
+
+async function html2canvasCapture(el, extraOpts){
+  const host = document.getElementById('printDoc');
+  let prevOp = '';
+  let prevVis = '';
+  let prevLeft = '';
+  if (host && host.contains(el)) {
+    prevOp = host.style.opacity;
+    prevVis = host.style.visibility;
+    prevLeft = host.style.left;
+    host.style.opacity = '1';
+    host.style.visibility = 'visible';
+    host.style.left = '0';
+  }
+  try {
+    return await html2canvas(el, Object.assign({
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      backgroundColor: '#ffffff',
+      logging: false
+    }, extraOpts || {}));
+  } finally {
+    if (host && host.contains(el)) {
+      host.style.opacity = prevOp;
+      host.style.visibility = prevVis;
+      host.style.left = prevLeft;
+    }
+  }
 }
 
 async function waitForImagesReady(root){
@@ -2116,7 +2153,7 @@ function setupTKP() {
       const pdfH = pdf.internal.pageSize.getHeight();
 
       for (let i = 0; i < pageNodes.length; i += 1) {
-        const canvas = await html2canvas(pageNodes[i], {scale:2, useCORS:true, backgroundColor:'#ffffff'});
+        const canvas = await html2canvasCapture(pageNodes[i]);
         const imgData = canvas.toDataURL('image/jpeg', 0.84);
         if (i > 0) pdf.addPage();
         pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);

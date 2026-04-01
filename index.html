@@ -1187,7 +1187,14 @@ function normalizeTemplateList(list, docType){
   if (!Array.isArray(list)) return [];
   return list
     .filter(it => it && typeof it === 'object' && it.id && it.name && it.file)
-    .map(it => ({ id: String(it.id), name: String(it.name), file: String(it.file), isDefault: !!it.isDefault, docType }));
+    .map(it => ({
+      id: String(it.id),
+      name: String(it.name),
+      file: String(it.file),
+      isDefault: !!it.isDefault,
+      docType,
+      assetType: String(it.assetType || it.type || '').toLowerCase()
+    }));
 }
 
 function setTemplateOptions(){
@@ -1312,12 +1319,44 @@ function buildTemplateContext(type, items, totals){
   };
 }
 
-function getTemplateAssetType(file){
+function getTemplateAssetType(file, tpl){
+  const fromMeta = String(tpl?.assetType || '').toLowerCase();
+  if (fromMeta === 'html' || fromMeta === 'pdf' || fromMeta === 'image') return fromMeta;
   const clean = String(file || '').split('?')[0].toLowerCase();
   if (clean.endsWith('.html') || clean.endsWith('.htm')) return 'html';
   if (clean.endsWith('.pdf')) return 'pdf';
   if (clean.endsWith('.jpg') || clean.endsWith('.jpeg') || clean.endsWith('.png') || clean.endsWith('.webp')) return 'image';
   return 'unknown';
+}
+
+function decodeBase64ToUint8Array(base64){
+  const binary = atob(String(base64 || ''));
+  const len = binary.length;
+  const bytes = new Uint8Array(len);
+  for (let i = 0; i < len; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+function decodeBase64ToText(base64){
+  const bytes = decodeBase64ToUint8Array(base64);
+  const dec = new TextDecoder('utf-8');
+  return dec.decode(bytes);
+}
+
+async function fetchTemplatePayload(fileUrl){
+  const r = await fetch(fileUrl, { cache: 'no-store' });
+  if (!r.ok) throw new Error('template fetch failed');
+  const ct = String(r.headers.get('content-type') || '').toLowerCase();
+  if (ct.includes('application/json') || ct.includes('text/plain')) {
+    const txt = await r.text();
+    let j = null;
+    try { j = JSON.parse(txt); } catch(e) {}
+    if (j && j.base64 && j.mimeType) {
+      return { mode: 'base64', base64: j.base64, mimeType: String(j.mimeType || '') };
+    }
+    return { mode: 'text', text: txt };
+  }
+  return { mode: 'arrayBuffer', buffer: await r.arrayBuffer(), mimeType: ct };
 }
 
 function makeTemplateOverlayHtml(type, ctx, pageNo){
@@ -1353,22 +1392,36 @@ function makeTemplateOverlayHtml(type, ctx, pageNo){
 }
 
 async function renderTemplateAssetPages(type, tpl, ctx, printHost){
-  const assetType = getTemplateAssetType(tpl.file);
+  const assetType = getTemplateAssetType(tpl.file, tpl);
   if (assetType === 'unknown') return false;
   if (assetType === 'html') return null;
 
   let bgImages = [];
   if (assetType === 'image') {
-    bgImages = [tpl.file];
+    try {
+      const payload = await fetchTemplatePayload(tpl.file);
+      if (payload.mode === 'base64') {
+        bgImages = [`data:${payload.mimeType || 'image/png'};base64,${payload.base64}`];
+      } else {
+        bgImages = [tpl.file];
+      }
+    } catch(e) {
+      bgImages = [tpl.file];
+    }
   } else if (assetType === 'pdf') {
     if (!window.pdfjsLib) return false;
     const pdfjsLib = window.pdfjsLib;
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@2.16.105/build/pdf.worker.min.js';
-    let ab;
+    let ab = null;
     try {
-      const r = await fetch(tpl.file, { cache: 'no-store' });
-      if (!r.ok) return false;
-      ab = await r.arrayBuffer();
+      const payload = await fetchTemplatePayload(tpl.file);
+      if (payload.mode === 'base64') {
+        ab = decodeBase64ToUint8Array(payload.base64).buffer;
+      } else if (payload.mode === 'arrayBuffer') {
+        ab = payload.buffer;
+      } else {
+        return false;
+      }
     } catch (e) {
       return false;
     }
@@ -1422,9 +1475,10 @@ async function tryRenderTemplatePdf(type, items, totals){
   if (nonHtmlDone === null) {
     let raw = '';
     try{
-      const r = await fetch(tpl.file, { cache: 'no-store' });
-      if (!r.ok) throw new Error('template not found');
-      raw = await r.text();
+      const payload = await fetchTemplatePayload(tpl.file);
+      if (payload.mode === 'base64') raw = decodeBase64ToText(payload.base64);
+      else if (payload.mode === 'text') raw = payload.text;
+      else raw = new TextDecoder('utf-8').decode(new Uint8Array(payload.buffer || new ArrayBuffer(0)));
     }catch(e){
       return false;
     }

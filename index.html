@@ -1392,17 +1392,15 @@ async function loadTemplateBackgroundImages(tpl){
       else if (payload.mode === 'arrayBuffer') ab = payload.buffer;
     } catch(e) {}
     if (!ab) return [];
-    const bg = [];
     const pdfDoc = await pdfjsLib.getDocument({ data: ab }).promise;
-    for (let p = 1; p <= Math.min(pdfDoc.numPages, 12); p += 1) {
-      const page = await pdfDoc.getPage(p);
-      const vp = page.getViewport({ scale: 2 });
-      const c = document.createElement('canvas');
-      c.width = vp.width; c.height = vp.height;
-      await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
-      bg.push(c.toDataURL('image/jpeg', 0.9));
-    }
-    return bg;
+    if (pdfDoc.numPages < 1) return [];
+    // Одна эталонная страница PDF — макет «как должно выглядеть»; её же подкладываем под каждую страницу с модулями и ТП.
+    const page = await pdfDoc.getPage(1);
+    const vp = page.getViewport({ scale: 2 });
+    const c = document.createElement('canvas');
+    c.width = vp.width; c.height = vp.height;
+    await page.render({ canvasContext: c.getContext('2d'), viewport: vp }).promise;
+    return [c.toDataURL('image/jpeg', 0.9)];
   }
   return [];
 }
@@ -1442,7 +1440,7 @@ async function renderTemplateAssetPages(type, tpl, ctx, printHost){
       return false;
     }
     const pdfDoc = await pdfjsLib.getDocument({ data: ab }).promise;
-    for (let p = 1; p <= Math.min(pdfDoc.numPages, 6); p += 1) {
+    for (let p = 1; p <= pdfDoc.numPages; p += 1) {
       const page = await pdfDoc.getPage(p);
       const vp = page.getViewport({ scale: 2 });
       const c = document.createElement('canvas');
@@ -1830,7 +1828,10 @@ function getSelectedModules(){
     .filter(Boolean);
 }
 
-function renderTkpClassicPage(host, contentHtml, pageNo, totalPages, logoSrc, bgImage){
+function renderTkpClassicPage(host, contentHtml, pageNo, totalPages, logoSrc, bgImage, opts){
+  const skipGlobalTitle = opts && Object.prototype.hasOwnProperty.call(opts, 'skipGlobalTitle')
+    ? opts.skipGlobalTitle
+    : !!bgImage;
   const managerRaw = document.getElementById('managerName')?.value || '—';
   const phoneRaw = document.getElementById('managerPhone')?.value || '—';
   const emailRaw = (document.getElementById('managerEmail')?.value || '').trim();
@@ -1856,8 +1857,9 @@ function renderTkpClassicPage(host, contentHtml, pageNo, totalPages, logoSrc, bg
   inner.style.color = '#111';
   inner.style.display = 'block';
   const contactLine = emailRaw ? `${phone}  |  ${email}` : phone;
+  const globalTitleHtml = skipGlobalTitle ? '' : `<div style="font-size:42px;font-weight:700;line-height:1.16;margin:10px 0 22px 0;">ИТМен: функциональность по модулям и бизнес-задачи</div>`;
   inner.innerHTML = `
-    <div style="font-size:42px;font-weight:700;line-height:1.16;margin:10px 0 22px 0;">ИТМен: функциональность по модулям и бизнес-задачи</div>
+    ${globalTitleHtml}
     ${contentHtml}
     <div style="position:absolute;left:56px;right:56px;bottom:30px;display:flex;justify-content:space-between;align-items:center;">
       <div style="font-size:16px;line-height:1.25;">
@@ -2088,14 +2090,20 @@ function setupTKP() {
 
       const totalPages = pages.length;
       const tkpLogoSrc = (await resolveTkpLogoSrc()) || TKP_LOGO_DATA_URL || '';
+      const hasTplBg = templateBgImages.length > 0;
       pages.forEach((html, idx) => {
         const isLastPage = idx === (pages.length - 1);
-        // For this TKP profile:
-        // - module/support pages use a clean template page background (usually first page),
-        // - final spec page stays dynamic without table-as-background.
-        const moduleBg = templateBgImages.length ? templateBgImages[0] : '';
-        const bg = isLastPage ? '' : moduleBg;
-        renderTkpClassicPage(printHost, html, idx + 1, totalPages, tkpLogoSrc, bg);
+        // PDF-шаблон — одна эталонная страница дизайна: тот же фон на всех страницах с модулями и ТП; число страниц растёт от выбора.
+        // Финальная страница — только таблица из калькулятора, без фона из PDF.
+        let bg = '';
+        let skipGlobalTitle = false;
+        if (isLastPage) {
+          skipGlobalTitle = true;
+        } else if (hasTplBg) {
+          bg = templateBgImages[0];
+          skipGlobalTitle = true;
+        }
+        renderTkpClassicPage(printHost, html, idx + 1, totalPages, tkpLogoSrc, bg, { skipGlobalTitle });
       });
       await waitForImagesReady(printHost);
 

@@ -1830,6 +1830,9 @@ function getSelectedModules(){
     .filter(Boolean);
 }
 
+// Верхний отступ контента на страницах с PDF-фоном: текст начинается под зоной логотипа в шаблоне.
+const TKP_TEMPLATE_CONTENT_TOP_PX = 200;
+
 function renderTkpClassicPage(host, contentHtml, pageNo, totalPages, logoSrc, bgImage, opts){
   const skipGlobalTitle = opts && Object.prototype.hasOwnProperty.call(opts, 'skipGlobalTitle')
     ? opts.skipGlobalTitle
@@ -1858,7 +1861,10 @@ function renderTkpClassicPage(host, contentHtml, pageNo, totalPages, logoSrc, bg
   inner.className = 'page-inner';
   inner.style.position = 'relative';
   inner.style.zIndex = '1';
-  inner.style.padding = '42px 54px 78px 54px';
+  {
+    const pt = bgImage ? TKP_TEMPLATE_CONTENT_TOP_PX : 42;
+    inner.style.padding = `${pt}px 54px 78px 54px`;
+  }
   inner.style.gap = '10px';
   inner.style.fontFamily = 'Arial, Helvetica, sans-serif';
   inner.style.color = '#111';

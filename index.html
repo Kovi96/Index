@@ -1285,14 +1285,14 @@ function buildModuleSectionsHtml(){
     if (!mod) return '';
     return `
       <section style="margin:14px 0 18px 0;">
-        <h2 style="font-size:30px;margin:0 0 10px 0;">${escapeHtml(mod.title)}</h2>
-        <p style="font-size:20px;line-height:1.4;margin:0 0 10px 0;"><strong>Общая информация:</strong> ${escapeHtml(mod.info)}</p>
-        <h3 style="font-size:24px;margin:10px 0 6px 0;">Функции</h3>
-        <ul style="font-size:18px;line-height:1.4;margin:0 0 10px 0;padding-left:24px;">
+        <h2 style="font-size:32px;margin:0 0 10px 0;">${escapeHtml(mod.title)}</h2>
+        <p style="font-size:22px;line-height:1.4;margin:0 0 10px 0;"><strong>Общая информация:</strong> ${escapeHtml(mod.info)}</p>
+        <h3 style="font-size:26px;margin:10px 0 6px 0;">Функции</h3>
+        <ul style="font-size:20px;line-height:1.4;margin:0 0 10px 0;padding-left:24px;">
           ${mod.functions.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}
         </ul>
-        <h3 style="font-size:24px;margin:10px 0 6px 0;">Бизнес-выгоды</h3>
-        <ul style="font-size:18px;line-height:1.4;margin:0;padding-left:24px;">
+        <h3 style="font-size:26px;margin:10px 0 6px 0;">Бизнес-выгоды</h3>
+        <ul style="font-size:20px;line-height:1.4;margin:0;padding-left:24px;">
           ${mod.benefits.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}
         </ul>
       </section>
@@ -1840,9 +1840,10 @@ function getSelectedModules(){
 }
 
 // Верхний отступ контента на страницах с PDF-фоном: текст начинается под зоной логотипа в шаблоне.
-const TKP_TEMPLATE_CONTENT_TOP_PX = 200;
+const TKP_TEMPLATE_CONTENT_TOP_PX = 228;
 
 function renderTkpClassicPage(host, contentHtml, pageNo, totalPages, logoSrc, bgImage, opts){
+  const layoutLandscape = !!(opts && opts.layoutLandscape);
   const skipGlobalTitle = opts && Object.prototype.hasOwnProperty.call(opts, 'skipGlobalTitle')
     ? opts.skipGlobalTitle
     : !!bgImage;
@@ -1864,14 +1865,19 @@ function renderTkpClassicPage(host, contentHtml, pageNo, totalPages, logoSrc, bg
     bgImg.style.cssText = 'position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;pointer-events:none;user-select:none;';
     page.appendChild(bgImg);
   }
-  page.style.width = '1754px';
-  page.style.height = '1240px';
+  if (layoutLandscape) {
+    page.style.width = '1754px';
+    page.style.height = '1240px';
+  } else {
+    page.style.width = '1240px';
+    page.style.height = '1754px';
+  }
   const inner = document.createElement('div');
   inner.className = 'page-inner';
   inner.style.position = 'relative';
   inner.style.zIndex = '1';
   {
-    const pt = bgImage ? TKP_TEMPLATE_CONTENT_TOP_PX : 42;
+    const pt = bgImage ? TKP_TEMPLATE_CONTENT_TOP_PX : 44;
     inner.style.padding = `${pt}px 54px 78px 54px`;
   }
   inner.style.gap = '10px';
@@ -1879,16 +1885,16 @@ function renderTkpClassicPage(host, contentHtml, pageNo, totalPages, logoSrc, bg
   inner.style.color = '#111';
   inner.style.display = 'block';
   const contactLine = emailRaw ? `${phone}  |  ${email}` : phone;
-  const globalTitleHtml = skipGlobalTitle ? '' : `<div style="font-size:42px;font-weight:700;line-height:1.16;margin:10px 0 22px 0;">ИТМен: функциональность по модулям и бизнес-задачи</div>`;
+  const globalTitleHtml = skipGlobalTitle ? '' : `<div style="font-size:44px;font-weight:700;line-height:1.16;margin:10px 0 22px 0;">ИТМен: функциональность по модулям и бизнес-задачи</div>`;
   inner.innerHTML = `
     ${globalTitleHtml}
     ${contentHtml}
     <div style="position:absolute;left:56px;right:56px;bottom:30px;display:flex;justify-content:space-between;align-items:center;">
-      <div style="font-size:16px;line-height:1.25;">
+      <div style="font-size:18px;line-height:1.25;">
         <div><strong>Исп.:</strong> ${manager},</div>
         <div>${contactLine}</div>
       </div>
-      <div style="font-size:16px;color:#333;">-- ${pageNo} of ${totalPages} --</div>
+      <div style="font-size:18px;color:#333;">-- ${pageNo} of ${totalPages} --</div>
     </div>
   `;
   const finalLogoSrc = logoSrc || document.querySelector('.ui-topright-logo img')?.src || document.querySelector('img[alt="Инферит"]')?.src || '';
@@ -1959,7 +1965,7 @@ function buildTkpPriceTableHtml(items, totals){
   }).join('');
 
   return `
-    <table style="width:100%;border-collapse:collapse;font-size:13px;line-height:1.25;color:#111;table-layout:fixed;">
+    <table style="width:100%;border-collapse:collapse;font-size:15px;line-height:1.25;color:#111;table-layout:fixed;">
       <colgroup>
         <col style="width:${usePartner ? '12' : '14'}%">
         <col style="width:${usePartner ? '20' : '22'}%">
@@ -1979,8 +1985,8 @@ function buildTkpPriceTableHtml(items, totals){
           <th style="padding:8px 10px;border:1px solid #666;text-align:right;white-space:normal;word-break:break-word;overflow-wrap:anywhere;color:#111;font-weight:700;">Цена</th>
           <th style="padding:8px 10px;border:1px solid #666;text-align:right;white-space:normal;word-break:break-word;overflow-wrap:anywhere;color:#111;font-weight:700;">Сумма без НДС</th>
           <th style="padding:8px 10px;border:1px solid #666;text-align:right;white-space:normal;word-break:break-word;overflow-wrap:anywhere;color:#111;font-weight:700;">Сумма с НДС</th>
-          ${usePartner ? '<th style="padding:8px 10px;border:1px solid #666;text-align:right;white-space:normal;word-break:break-word;overflow-wrap:anywhere;font-size:12px;line-height:1.2;color:#111;font-weight:700;">Партнер сумма без НДС</th>' : ''}
-          ${usePartner ? '<th style="padding:8px 10px;border:1px solid #666;text-align:right;white-space:normal;word-break:break-word;overflow-wrap:anywhere;font-size:12px;line-height:1.2;color:#111;font-weight:700;">Партнер сумма с НДС</th>' : ''}
+          ${usePartner ? '<th style="padding:8px 10px;border:1px solid #666;text-align:right;white-space:normal;word-break:break-word;overflow-wrap:anywhere;font-size:14px;line-height:1.2;color:#111;font-weight:700;">Партнер сумма без НДС</th>' : ''}
+          ${usePartner ? '<th style="padding:8px 10px;border:1px solid #666;text-align:right;white-space:normal;word-break:break-word;overflow-wrap:anywhere;font-size:14px;line-height:1.2;color:#111;font-weight:700;">Партнер сумма с НДС</th>' : ''}
         </tr>
       </thead>
       <tbody>
@@ -2097,14 +2103,14 @@ function setupTKP() {
         const mod = TKP_MODULE_CONTENT[moduleName];
         if (!mod) return;
         pages.push(`
-        <div style="font-size:30px;font-weight:700;margin:8px 0 14px 0;">${escapeHtml(mod.title)}</div>
-        <div style="font-size:20px;line-height:1.45;margin-bottom:14px;"><strong>Общая информация:</strong><br>${escapeHtml(mod.info)}</div>
-        <div style="font-size:24px;font-weight:700;margin:8px 0;">Функции:</div>
-        <ul style="margin:0 0 14px 0;padding-left:24px;font-size:19px;line-height:1.45;">
+        <div style="font-size:32px;font-weight:700;margin:8px 0 14px 0;">${escapeHtml(mod.title)}</div>
+        <div style="font-size:22px;line-height:1.45;margin-bottom:14px;"><strong>Общая информация:</strong><br>${escapeHtml(mod.info)}</div>
+        <div style="font-size:26px;font-weight:700;margin:8px 0;">Функции:</div>
+        <ul style="margin:0 0 14px 0;padding-left:24px;font-size:21px;line-height:1.45;">
             ${mod.functions.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}
           </ul>
-        <div style="font-size:24px;font-weight:700;margin:8px 0;">Бизнес-выгоды:</div>
-        <ul style="margin:0;padding-left:24px;font-size:19px;line-height:1.45;">
+        <div style="font-size:26px;font-weight:700;margin:8px 0;">Бизнес-выгоды:</div>
+        <ul style="margin:0;padding-left:24px;font-size:21px;line-height:1.45;">
             ${mod.benefits.map(x=>`<li>${escapeHtml(x)}</li>`).join('')}
           </ul>
         `);
@@ -2112,10 +2118,10 @@ function setupTKP() {
 
       // ТП всегда включается в ТКП, независимо от выбранных модулей
       pages.push(`
-        <div style="font-size:30px;font-weight:700;margin:8px 0 14px 0;">Техническая поддержка «Инферит ИТМен»</div>
-        <div style="font-size:20px;line-height:1.45;">Доступны следующие пакеты технической поддержки: Базовый (гарантийный), Стандартный и Расширенный.</div>
-        <div style="font-size:24px;font-weight:700;margin-top:12px;">Базовый (гарантийный)</div>
-        <ul style="padding-left:24px;font-size:19px;line-height:1.42;">
+        <div style="font-size:32px;font-weight:700;margin:8px 0 14px 0;">Техническая поддержка «Инферит ИТМен»</div>
+        <div style="font-size:22px;line-height:1.45;">Доступны следующие пакеты технической поддержки: Базовый (гарантийный), Стандартный и Расширенный.</div>
+        <div style="font-size:26px;font-weight:700;margin-top:12px;">Базовый (гарантийный)</div>
+        <ul style="padding-left:24px;font-size:21px;line-height:1.42;">
           <li>Количество обращений: без ограничений.</li>
           <li>Каналы приема обращений: портал, e-mail.</li>
           <li>Режим приема обращений: 24x7.</li>
@@ -2123,14 +2129,14 @@ function setupTKP() {
           <li>Доступ к обновлениям продукта (включая обновления безопасности).</li>
           <li>Доступ к базе знаний (Wiki) и системе отслеживания ошибок (BugTracker).</li>
         </ul>
-        <div style="font-size:24px;font-weight:700;">Стандартный</div>
-        <ul style="padding-left:24px;font-size:19px;line-height:1.42;">
+        <div style="font-size:26px;font-weight:700;">Стандартный</div>
+        <ul style="padding-left:24px;font-size:21px;line-height:1.42;">
           <li>Все возможности Базового пакета.</li>
           <li>Моделирование проблемы на стенде службы ТП (при наличии технической возможности).</li>
           <li>Обучение: до 50 обращений в год.</li>
         </ul>
-        <div style="font-size:24px;font-weight:700;">Расширенный</div>
-        <ul style="padding-left:24px;font-size:19px;line-height:1.42;">
+        <div style="font-size:26px;font-weight:700;">Расширенный</div>
+        <ul style="padding-left:24px;font-size:21px;line-height:1.42;">
           <li>Все возможности Стандартного пакета.</li>
           <li>Удаленное подключение к инфраструктуре пользователя для анализа проблемы (до 100 обращений в год).</li>
           <li>Проведение видеоконференцсвязи (до 100 обращений в год).</li>
@@ -2140,9 +2146,9 @@ function setupTKP() {
 
       const tblHtml = buildTkpPriceTableHtml(items, totals);
       pages.push(`
-        <div style="font-size:30px;font-weight:700;margin:8px 0 14px 0;">Пример расчета стоимости проекта</div>
-        <div style="font-size:19px;margin-bottom:12px;">(автоматически сформировано по выбранным параметрам калькулятора)</div>
-        <div style="font-size:20px;">${tblHtml}</div>
+        <div style="font-size:32px;font-weight:700;margin:8px 0 14px 0;">Пример расчета стоимости проекта</div>
+        <div style="font-size:21px;margin-bottom:12px;">(автоматически сформировано по выбранным параметрам калькулятора)</div>
+        <div style="font-size:22px;">${tblHtml}</div>
       `);
 
       const totalPages = pages.length;
@@ -2160,22 +2166,35 @@ function setupTKP() {
           bg = templateBgImages[0];
           skipGlobalTitle = true;
         }
-        renderTkpClassicPage(printHost, html, idx + 1, totalPages, tkpLogoSrc, bg, { skipGlobalTitle });
+        renderTkpClassicPage(printHost, html, idx + 1, totalPages, tkpLogoSrc, bg, {
+          skipGlobalTitle,
+          layoutLandscape: isLastPage
+        });
       });
       await waitForImagesReady(printHost);
 
       const jsPDF = (window.jspdf && window.jspdf.jsPDF) ? window.jspdf.jsPDF : (window.jsPDF || null);
       if (!jsPDF) throw new Error('jsPDF не найден');
 
-      const pdf = new jsPDF({orientation:'landscape', unit:'pt', format:'a4', compress:true});
       const pageNodes = Array.from(printHost.querySelectorAll('.a3page'));
-      const pdfW = pdf.internal.pageSize.getWidth();
-      const pdfH = pdf.internal.pageSize.getHeight();
+      const nPages = pageNodes.length;
+      const onlyTablePage = nPages === 1;
+      const pdf = new jsPDF({
+        orientation: onlyTablePage ? 'landscape' : 'portrait',
+        unit: 'pt',
+        format: 'a4',
+        compress: true
+      });
 
-      for (let i = 0; i < pageNodes.length; i += 1) {
+      for (let i = 0; i < nPages; i += 1) {
         const canvas = await html2canvasCapture(pageNodes[i]);
         const imgData = canvas.toDataURL('image/jpeg', 0.84);
-        if (i > 0) pdf.addPage();
+        const isLast = i === nPages - 1;
+        if (i > 0) {
+          pdf.addPage('a4', isLast ? 'l' : 'p');
+        }
+        const pdfW = pdf.internal.pageSize.getWidth();
+        const pdfH = pdf.internal.pageSize.getHeight();
         pdf.addImage(imgData, 'JPEG', 0, 0, pdfW, pdfH);
       }
 

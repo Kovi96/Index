@@ -1180,6 +1180,7 @@ const TEMPLATE_STATE = {
   selectedType: 'kp'
 };
 const REMOTE_TEMPLATE_REGISTRY_URL = 'https://script.google.com/macros/s/AKfycbxUqSqRvRjwXpgtyS1gpp2gmcGetcsHqUAwNc71L_74o5j5Fc6gNw7UA04bPFRYRX-2Bg/exec';
+const USE_REMOTE_TEMPLATE_REGISTRY = true;
 
 function normalizeTemplateList(list, docType){
   if (!Array.isArray(list)) return [];
@@ -1212,26 +1213,25 @@ function setTemplateOptions(){
 }
 
 async function loadTemplateRegistry(){
-  let loaded = false;
-  try{
-    const r = await fetch(REMOTE_TEMPLATE_REGISTRY_URL, { cache: 'no-store' });
-    if (!r.ok) throw new Error('remote registry not found');
-    const cfg = await r.json();
-    TEMPLATE_STATE.kp = normalizeTemplateList(cfg.kp, 'kp');
-    TEMPLATE_STATE.tkp = normalizeTemplateList(cfg.tkp, 'tkp');
-    loaded = true;
-  }catch(e){}
-  if (!loaded) {
+  let cfg = null;
+  if (USE_REMOTE_TEMPLATE_REGISTRY) {
+    try {
+      const rr = await fetch(REMOTE_TEMPLATE_REGISTRY_URL, { cache: 'no-store' });
+      if (!rr.ok) throw new Error('remote registry not found');
+      cfg = await rr.json();
+    } catch(e) {}
+  }
+  if (!cfg) {
     try{
       const r = await fetch('templates/index.json', { cache: 'no-store' });
-      if (!r.ok) throw new Error('local index.json not found');
-      const cfg = await r.json();
-      TEMPLATE_STATE.kp = normalizeTemplateList(cfg.kp, 'kp');
-      TEMPLATE_STATE.tkp = normalizeTemplateList(cfg.tkp, 'tkp');
-      loaded = true;
+      if (!r.ok) throw new Error('index.json not found');
+      cfg = await r.json();
     }catch(e){}
   }
-  if (!loaded){
+  if (cfg) {
+    TEMPLATE_STATE.kp = normalizeTemplateList(cfg.kp, 'kp');
+    TEMPLATE_STATE.tkp = normalizeTemplateList(cfg.tkp, 'tkp');
+  } else {
     TEMPLATE_STATE.kp = [];
     TEMPLATE_STATE.tkp = [];
   }

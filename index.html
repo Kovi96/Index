@@ -2011,7 +2011,7 @@ const TKP_TEMPLATE_TEXT_MASK_ON_BG = true;
 
 function renderTkpClassicPage(host, contentHtml, pageNo, totalPages, logoSrc, bgImage, opts){
   const tableOnlyPage = !!(opts && opts.tableOnlyPage);
-  const effectiveBg = tableOnlyPage ? '' : (bgImage || '');
+  const effectiveBg = bgImage || '';
   const layoutLandscape = !!(opts && opts.layoutLandscape);
   const skipGlobalTitle = opts && Object.prototype.hasOwnProperty.call(opts, 'skipGlobalTitle')
     ? opts.skipGlobalTitle
@@ -2053,24 +2053,39 @@ function renderTkpClassicPage(host, contentHtml, pageNo, totalPages, logoSrc, bg
     textMask.style.pointerEvents = 'none';
     page.appendChild(textMask);
   }
-  if (!tableOnlyPage) {
+  {
     const footerLeftMask = document.createElement('div');
     footerLeftMask.setAttribute('aria-hidden', 'true');
     footerLeftMask.style.position = 'absolute';
-    footerLeftMask.style.left = '52px';
+    footerLeftMask.style.left = '44px';
     footerLeftMask.style.bottom = '18px';
-    footerLeftMask.style.width = '470px';
-    footerLeftMask.style.height = '118px';
+    footerLeftMask.style.width = '760px';
+    footerLeftMask.style.height = '132px';
     footerLeftMask.style.background = '#fff';
     footerLeftMask.style.zIndex = '0.6';
     footerLeftMask.style.pointerEvents = 'none';
     page.appendChild(footerLeftMask);
   }
-  if (tableOnlyPage) {
+  if (tableOnlyPage && !effectiveBg) {
     const deco = document.createElement('div');
     deco.setAttribute('aria-hidden', 'true');
     deco.style.cssText = 'position:absolute;right:0;bottom:0;width:min(38%,280px);height:18%;min-height:68px;max-height:148px;background:#c41230;clip-path:polygon(20% 0,100% 0,100% 100%,0 100%);z-index:0;pointer-events:none;';
     page.appendChild(deco);
+  }
+  if (tableOnlyPage && effectiveBg) {
+    // Для табличной страницы оставляем фирменную шапку/угол из PDF,
+    // а центр листа очищаем под таблицу, чтобы не было наложения текста.
+    const tableMask = document.createElement('div');
+    tableMask.setAttribute('aria-hidden', 'true');
+    tableMask.style.position = 'absolute';
+    tableMask.style.left = '52px';
+    tableMask.style.right = '52px';
+    tableMask.style.top = '170px';
+    tableMask.style.bottom = '140px';
+    tableMask.style.background = '#fff';
+    tableMask.style.zIndex = '0.55';
+    tableMask.style.pointerEvents = 'none';
+    page.appendChild(tableMask);
   }
   if (layoutLandscape) {
     page.style.width = '1754px';
@@ -2087,7 +2102,7 @@ function renderTkpClassicPage(host, contentHtml, pageNo, totalPages, logoSrc, bg
     let pt = effectiveBg ? TKP_TEMPLATE_CONTENT_TOP_PX : 44;
     let pb = 78;
     if (tableOnlyPage) {
-      pt = 36;
+      pt = effectiveBg ? 176 : 36;
       pb = 100;
     }
     inner.style.padding = `${pt}px 54px ${pb}px 54px`;
@@ -2432,14 +2447,15 @@ function setupTKP() {
       const hasTplBg = templateBgImages.length > 0;
       pages.forEach((html, idx) => {
         const isLastPage = idx === (pages.length - 1);
-        // PDF-шаблон — одна эталонная страница дизайна: тот же фон на всех страницах с модулями и ТП; число страниц растёт от выбора.
-        // Финальная страница — таблица в альбоме; фон PDF не кладём (читаемость), красный угол — CSS в renderTkpClassicPage.
+        // PDF-шаблон — одна эталонная страница дизайна: тот же фон на всех страницах.
+        // Для финальной таблицы фон тоже используем, но внутри renderTkpClassicPage
+        // поверх фона кладём белую маску в зоне таблицы.
         let bg = '';
         let skipGlobalTitle = false;
-        if (isLastPage) {
-          skipGlobalTitle = true;
-        } else if (hasTplBg) {
+        if (hasTplBg) {
           bg = templateBgImages[0];
+          skipGlobalTitle = true;
+        } else if (isLastPage) {
           skipGlobalTitle = true;
         }
         renderTkpClassicPage(printHost, html, idx + 1, totalPages, tkpLogoSrc, bg, {

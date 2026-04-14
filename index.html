@@ -2223,6 +2223,11 @@ function buildTkpSpecSubtitle(){
 
 function buildTkpPriceTableHtml(items, totals){
   const usePartner = !!document.getElementById('usePartnerDiscount')?.checked;
+  const useMod = !!document.getElementById('useModuleDiscount')?.checked;
+  const useSup = !!document.getElementById('useSupportDiscount')?.checked;
+  const useImp = !!document.getElementById('useImplDiscount')?.checked;
+  const usePrismaSup = !!document.getElementById('usePrismaSupportDiscount')?.checked;
+  const usePrismaLic = !!document.getElementById('usePrismaLicDiscount')?.checked;
   const discPct = getDisc('partnerDiscount','usePartnerDiscount');
   const dMod = getDisc('discModules','useModuleDiscount');
   const dSup = getDisc('discSupport','useSupportDiscount');
@@ -2232,11 +2237,11 @@ function buildTkpPriceTableHtml(items, totals){
 
   const rows = items.map(it => {
     let lineDisc = 0;
-    if (it.group === 'license') lineDisc = dMod;
-    if (it.group === 'support') lineDisc = dSup;
-    if (it.group === 'impl') lineDisc = dImp;
-    if (it.group === 'prisma_license') lineDisc = dPrismaLic;
-    if (it.group === 'prisma_support') lineDisc = dPrismaSup;
+    if (useMod && it.group === 'license') lineDisc = dMod;
+    if (useSup && it.group === 'support') lineDisc = dSup;
+    if (useImp && it.group === 'impl') lineDisc = dImp;
+    if (usePrismaLic && it.group === 'prisma_license') lineDisc = dPrismaLic;
+    if (usePrismaSup && it.group === 'prisma_support') lineDisc = dPrismaSup;
 
     const effUnit = it.unitPrice * (1 - lineDisc);
     const subtotal = effUnit * it.qty;
@@ -2246,17 +2251,19 @@ function buildTkpPriceTableHtml(items, totals){
     const partnerSubtotal = usePartner ? partnerUnit * it.qty : 0;
     const partnerVat = (usePartner && it.vatApplies) ? partnerSubtotal * VAT : 0;
     const partnerWithVat = usePartner ? partnerSubtotal + partnerVat : 0;
+    const cellCommon = 'padding:8px 10px;border:1px solid #000;white-space:normal;word-break:break-word;overflow-wrap:anywhere;';
     return `
       <tr>
-        <td style="padding:8px 10px;border:1px solid #000;">${escapeHtml(it.nomen || '—')}</td>
-        <td style="padding:8px 10px;border:1px solid #000;">${escapeHtml(it.sku || '—')}</td>
-        <td style="padding:8px 10px;border:1px solid #000;">${escapeHtml(it.name || '—')}</td>
-        <td style="padding:8px 10px;border:1px solid #000;text-align:right;">${it.qty}</td>
-        <td style="padding:8px 10px;border:1px solid #000;text-align:right;">${fmt(effUnit)}</td>
-        <td style="padding:8px 10px;border:1px solid #000;text-align:right;">${fmt(subtotal)}</td>
-        <td style="padding:8px 10px;border:1px solid #000;text-align:right;">${fmt(withVat)}</td>
-        ${usePartner ? `<td style="padding:8px 10px;border:1px solid #000;text-align:right;">${fmt(partnerSubtotal)}</td>` : ''}
-        ${usePartner ? `<td style="padding:8px 10px;border:1px solid #000;text-align:right;">${fmt(partnerWithVat)}</td>` : ''}
+        <td style="${cellCommon}">${escapeHtml(it.nomen || '—')}</td>
+        <td style="${cellCommon}">${escapeHtml(it.sku || '—')}</td>
+        <td style="${cellCommon}">${escapeHtml(it.name || '—')}</td>
+        <td style="${cellCommon}text-align:right;">${it.qty}</td>
+        <td style="${cellCommon}text-align:right;">${fmt(it.unitPrice)}</td>
+        <td style="${cellCommon}text-align:right;">${lineDisc > 0 ? Math.round(lineDisc * 100) + '%' : '0%'}</td>
+        <td style="${cellCommon}text-align:right;">${fmt(subtotal)}</td>
+        <td style="${cellCommon}text-align:right;">${fmt(withVat)}</td>
+        ${usePartner ? `<td style="${cellCommon}text-align:right;">${fmt(partnerSubtotal)}</td>` : ''}
+        ${usePartner ? `<td style="${cellCommon}text-align:right;">${fmt(partnerWithVat)}</td>` : ''}
       </tr>
     `;
   }).join('');
@@ -2264,14 +2271,15 @@ function buildTkpPriceTableHtml(items, totals){
   return `
     <table style="width:100%;border-collapse:collapse;border:1px solid #000;font-size:16px;line-height:1.25;color:#111;table-layout:fixed;">
       <colgroup>
-        <col style="width:${usePartner ? '12' : '14'}%">
-        <col style="width:${usePartner ? '20' : '22'}%">
-        <col style="width:${usePartner ? '18' : '23'}%">
+        <col style="width:${usePartner ? '11' : '12'}%">
+        <col style="width:${usePartner ? '17' : '19'}%">
+        <col style="width:${usePartner ? '17' : '20'}%">
         <col style="width:7%">
-        <col style="width:9%">
-        <col style="width:${usePartner ? '11' : '12'}%">
-        <col style="width:${usePartner ? '11' : '12'}%">
-        ${usePartner ? '<col style="width:6%"><col style="width:6%">' : ''}
+        <col style="width:${usePartner ? '8' : '9'}%">
+        <col style="width:6%">
+        <col style="width:${usePartner ? '10' : '13'}%">
+        <col style="width:${usePartner ? '10' : '13'}%">
+        ${usePartner ? '<col style="width:7%"><col style="width:7%">' : ''}
       </colgroup>
       <thead>
         <tr style="background:#eee;">
@@ -2280,6 +2288,7 @@ function buildTkpPriceTableHtml(items, totals){
           <th style="padding:8px 10px;border:1px solid #000;text-align:left;white-space:normal;word-break:break-word;overflow-wrap:anywhere;color:#111;font-weight:700;">Наименование</th>
           <th style="padding:8px 10px;border:1px solid #000;text-align:right;white-space:normal;word-break:break-word;overflow-wrap:anywhere;color:#111;font-weight:700;">Кол-во</th>
           <th style="padding:8px 10px;border:1px solid #000;text-align:right;white-space:normal;word-break:break-word;overflow-wrap:anywhere;color:#111;font-weight:700;">Цена</th>
+          <th style="padding:8px 10px;border:1px solid #000;text-align:right;white-space:normal;word-break:break-word;overflow-wrap:anywhere;color:#111;font-weight:700;">Скидка</th>
           <th style="padding:8px 10px;border:1px solid #000;text-align:right;white-space:normal;word-break:break-word;overflow-wrap:anywhere;color:#111;font-weight:700;">Сумма без НДС</th>
           <th style="padding:8px 10px;border:1px solid #000;text-align:right;white-space:normal;word-break:break-word;overflow-wrap:anywhere;color:#111;font-weight:700;">Сумма с НДС</th>
           ${usePartner ? '<th style="padding:8px 10px;border:1px solid #000;text-align:right;white-space:normal;word-break:break-word;overflow-wrap:anywhere;font-size:15px;line-height:1.2;color:#111;font-weight:700;">Партнер сумма без НДС</th>' : ''}
